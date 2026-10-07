@@ -6,7 +6,7 @@
    ===================================================================== */
 
 const DATA = {
-  asOf: { adse: '31 Jul 2026', lookthrough: '6 Okt 2026', panel: '10 Apr 2025', products: 'Okt 2026' },
+  asOf: { adse: '31 Jul 2026', lookthrough: '6 Okt 2026', panel: '10 Apr 2025', products: 'Okt 2026', idamanContract: 'S022615B09 (H360-i T1088T 06/26)' },
   adse: {
     anchor: 49.6, rocket: 51.3,
     perf: [
@@ -82,7 +82,7 @@ function runRezeki(plan, basic, saver, saverYears, adhoc, rate) {
 /* ---------------- state ---------------- */
 const blankState = () => ({
   prod: 'idaman', lang: 'bm',
-  i: { family: '', persons: [{ name: '', rel: 'self', m: '' }], sum: '', term: '70', plan: '200', ded: 'none', area: 'both' },
+  i: { family: '', persons: [{ name: '', rel: 'self', m: '' }], sum: '', tpd: 'yes', tpdSum: '', term: '70', plan: '200', ded: 'none', area: 'both' },
   r: { name: '', age: '', use: 'retire', child: '', childAge: '', plan: '5Pay20', basic: '', saver: '', saverYears: '', adhoc: '',
        have: { gk: false, df: false, m1: false, m2: false }, deathMode: 'blank',
        death: [{ y: 2, v: '' }, { y: 5, v: '' }, { y: 10, v: '' }, { y: 19, v: '' }] },
@@ -125,6 +125,8 @@ function renderIdaman() {
   const persons = s.persons.filter(p => p.name.trim() || num(p.m));
   const n = Math.max(persons.length, 1);
   const sum = num(s.sum);
+  const hasTpd = s.tpd === 'yes';
+  const tpdSum = hasTpd ? (num(s.tpdSum) || sum) : 0;
   const total = persons.reduce((a, p) => a + num(p.m), 0);
   const fam = esc(s.family.trim() || (persons[0] && persons[0].name) || t('anda', 'you'));
   const p300 = s.plan === '300';
@@ -147,13 +149,12 @@ function renderIdaman() {
     t('<b>Rawatan kemalangan kecemasan pesakit luar</b> termasuk gigi + susulan 30 hari', '<b>Emergency accident out-patient</b> incl. dental + 30 days follow-up'),
     t('<b>Fisioterapi pesakit luar</b> — sehingga 8 sesi (sakit belakang, patah tulang, kecederaan ligamen)', '<b>Out-patient physiotherapy</b> — up to 8 sessions (back pain, fractures, ligament injury)'),
     t('<b>Rawatan penyakit pesakit luar</b> (penyakit tertentu, 5% co-takaful sehingga RM500)', '<b>Out-patient illness treatment</b> (selected conditions, 5% co-takaful up to RM500)'),
-    t('<b>Penjagaan jururawat di rumah</b> — sehingga 180 hari seumur hidup', '<b>Home nursing care</b> — up to 180 days lifetime'),
-    t('<b>Komplikasi bersalin tertentu</b> &amp; <b>kanta intraokular</b>', '<b>Specified maternity complications</b> &amp; <b>intraocular lens</b>'),
+    t(`<b>Penjagaan jururawat di rumah</b> — sehingga ${p300 ? 'RM6,000' : 'RM3,000'} setiap kemasukan (maks 180 hari seumur hidup)`, `<b>Home nursing care</b> — up to ${p300 ? 'RM6,000' : 'RM3,000'} per admission (max 180 days lifetime)`),
     t('<b>Personal Medical Case Management</b> — pendapat kedua pakar global melalui Teladoc', '<b>Personal Medical Case Management</b> — global specialist 2nd opinion via Teladoc'),
   ];
   if (p300) {
     also.push(t('<b>★ Prevention &amp; Primary Care</b> — saringan, vaksin, GP RM50×3/thn (gabungan RM1,000 setiap 2 thn)', '<b>★ Prevention &amp; Primary Care</b> — screening, vaccination, GP RM50×3/yr (combined RM1,000 per 2 yrs)'));
-    also.push(t('<b>★ Healthy Retirement Bonus</b> — RM500–RM1,000/thn ikut status Vitality, ke akaun PAF', '<b>★ Healthy Retirement Bonus</b> — RM500–RM1,000/yr by Vitality status, into PAF'));
+    also.push(t('<b>★ Komplikasi kehamilan tertentu</b> — sehingga RM10,000 seumur hidup · <b>★ Kanta intraokular</b> — sehingga RM7,000 seumur hidup', '<b>★ Specified pregnancy complications</b> — up to RM10,000 lifetime · <b>★ Intraocular lens</b> — up to RM7,000 lifetime'));
   } else {
     also.push(t('<b>Manfaat penjaga harian</b> untuk pesakit muda &amp; warga emas', '<b>Daily guardian benefit</b> for young &amp; senior patients'));
   }
@@ -182,7 +183,7 @@ function renderIdaman() {
     <div class="plans"><span class="pill">A-Life Idaman</span><span class="pill">A-Plus Health360-i · Plan ${s.plan}${dedPill}</span><span class="pill o">AIA PUBLIC Takaful Bhd.</span></div>
   </div>
   <div class="snap">
-    <div class="card"><div class="k">${t('Perlindungan kematian / TPD', 'Death / TPD cover')}</div><div class="big">${RM(sum)}</div><div class="sub">${t(`Setiap orang · <b>${RM(sum * 2)}</b> jika kematian akibat kemalangan (200%)`, `Each person · <b>${RM(sum * 2)}</b> if death is accidental (200%)`)}</div></div>
+    <div class="card"><div class="k">${hasTpd ? t('Perlindungan kematian / TPD', 'Death / TPD cover') : t('Perlindungan kematian', 'Death cover')}</div><div class="big">${RM(sum)}</div><div class="sub">${t(`Setiap orang · <b>${RM(sum * 2)}</b> jika kematian akibat kemalangan (200%)`, `Each person · <b>${RM(sum * 2)}</b> if death is accidental (200%)`)}</div></div>
     <div class="card"><div class="k">${t('Perubatan', 'Medical')} · Plan ${s.plan}</div><div class="big">${P.big}<small> ${t('juta / tahun', 'mil / year')}</small></div><div class="sub">${t(`Bilik &amp; penginapan <b>RM${P.rb}/hari</b> · Tiada had seumur hidup`, `Room &amp; board <b>RM${P.rb}/day</b> · No lifetime limit`)}</div></div>
     <div class="card people${persons.length > 2 ? ' many' : ''}"><div class="k">${t('Orang dilindungi · bulanan', 'Covered persons · monthly')}</div>${plist}
       <div class="total"><span style="font-size:7.8pt">${n > 1 ? t(`Jumlah untuk ${n}`, `Total for ${n}`) + ' · ' : ''}≈ ${RM2(daily)}${t('/hari', '/day')}</span><b>${RM(total)}${t('/bln', '/mth')}</b></div></div>
@@ -190,11 +191,13 @@ function renderIdaman() {
   <div class="pad">
     <div class="sec"><div class="n">1</div><h2>${t('A-Life Idaman — jaring keselamatan keluarga', 'A-Life Idaman — the family safety net')}</h2><div class="hint">${t('Setiap orang dilindungi', 'Per person covered')}</div></div>
     <div class="life">
-      <div class="lb"><div class="ic">🛡️</div><div class="v">${RM(sum)}</div><div class="t">${t('Manfaat kematian', 'Death benefit')}</div><div class="d">${t('Bayaran sekaligus kepada keluarga, tambah nilai akaun.', 'Lump sum to your family, plus account value.')}</div></div>
-      <div class="lb"><div class="ic">⚡</div><div class="v">${RM(sum * 2)}</div><div class="t">${t('Kematian akibat kemalangan', 'Accidental death')}</div><div class="d">${t('200% jumlah perlindungan jika kematian akibat kemalangan.', '200% of sum covered if death is due to accident.')}</div></div>
-      <div class="lb"><div class="ic">♿</div><div class="v">${RM(sum)}</div><div class="t">${t('Hilang Upaya Menyeluruh &amp; Kekal', 'Total &amp; Permanent Disability')}</div><div class="d">${t('Bayaran sekaligus jika TPD berlaku (hingga umur 70).', 'Lump sum if TPD happens (TPD cover up to age 70).')}</div></div>
-      <div class="lb"><div class="ic">🕋</div><div class="v">RM5,000</div><div class="t">Badal Hajj</div><div class="d">${t('Untuk waris uruskan Badal Haji bagi pihak anda (Muslim 16+).', 'For family to arrange Badal Hajj on your behalf (Muslims age 16+).')}</div></div>
-      <div class="lb"><div class="ic">⏳</div><div class="v">${t('Umur 100', 'Age 100')}</div><div class="t">${t('Lanjutan automatik', 'Auto-extension')}</div><div class="d">${t(`Perlindungan diteruskan hingga 100 selepas umur ${s.term}, jika nilai akaun mencukupi.`, `Cover continues to 100 after age ${s.term}, if account value allows.`)}</div></div>
+      <div class="lb"><div class="ic">🛡️</div><div class="v">${RM(sum)}</div><div class="t">${t('Manfaat kematian', 'Death benefit')}</div><div class="d">${t('Jumlah dilindungi kepada keluarga, tambah nilai akaun (PAF + PIF).', 'Sum covered to your family, plus account value (PAF + PIF).')}</div></div>
+      <div class="lb"><div class="ic">⚡</div><div class="v">${RM(sum * 2)}</div><div class="t">${t('Kematian akibat kemalangan', 'Accidental death')}</div><div class="d">${t('Faedah kematian + tambahan 100% jumlah dilindungi (sebelum umur 70).', 'Death benefit + extra 100% of sum covered (before age 70).')}</div></div>
+      ${hasTpd
+        ? `<div class="lb"><div class="ic">♿</div><div class="v">${RM(tpdSum)}</div><div class="t">${t('TPD · A-Plus DisabilityCare-i', 'TPD · A-Plus DisabilityCare-i')}</div><div class="d">${t('Bayaran pendahuluan: jumlah dilindungi asas berkurang selepas tuntutan. Hingga umur 70.', 'Advance payout: basic sum covered reduces after a claim. Up to age 70.')}</div></div>`
+        : `<div class="lb"><div class="ic">🔒</div><div class="v">${t('5 tahun', '5 years')}</div><div class="t">${t('Perlindungan berterusan', 'No-lapse guarantee')}</div><div class="d">${t('Sijil kekal berkuat kuasa 5 tahun pertama walaupun nilai akaun tak cukup, jika caruman dibayar tepat masa.', 'Stays in force for the first 5 years even if account value runs short, if contributions are paid on time.')}</div></div>`}
+      <div class="lb"><div class="ic">🕋</div><div class="v">RM5,000</div><div class="t">Badal Hajj</div><div class="d">${t('Untuk waris uruskan Badal Haji (Muslim 16+); selainnya dibayar sebagai belanja pengebumian.', 'For family to arrange Badal Hajj (Muslims 16+); otherwise paid as funeral expenses.')}</div></div>
+      <div class="lb"><div class="ic">⏳</div><div class="v">${t('Umur 100', 'Age 100')}</div><div class="t">${t('Lanjutan automatik', 'Auto-extension')}</div><div class="d">${t(`Selepas matang umur ${s.term}, perlindungan diteruskan hingga umur 100 jika nilai akaun cukup.`, `After maturity at ${s.term}, cover continues to age 100 if account value is enough.`)}</div></div>
     </div>
 
     <div class="sec"><div class="n">2</div><h2>${t(`A-Plus Health360-i (Plan ${s.plan}) — manfaat utama`, `A-Plus Health360-i (Plan ${s.plan}) — major benefits`)}</h2><div class="hint">${t('Tertakluk had tahunan', 'Subject to annual limit')}</div></div>
@@ -209,7 +212,7 @@ function renderIdaman() {
         <ul class="ticks" style="margin-top:2.5mm">
           <li style="color:#fff"><b>ICU</b> — ${t('ikut caj sebenar, tiada had hari', 'as charged, no day limit')}</li>
           <li style="color:#fff">${t('<b>Pembedahan, bilik bedah, pakar bius &amp; lawatan pakar</b> — ikut caj sebenar', '<b>Surgery, theatre, anaesthetist &amp; specialist visits</b> — as charged')}</li>
-          <li style="color:#fff">${t('<b>Sebelum masuk wad</b> 90 hari · <b>Selepas keluar wad</b> susulan termasuk fisio, kiropraktik &amp; akupunktur', '<b>Pre-hospitalisation</b> 90 days · <b>Post-hospitalisation</b> follow-up incl. physio, chiro &amp; acupuncture')}</li>
+          <li style="color:#fff">${t('<b>Sebelum masuk wad</b> 90 hari · <b>Selepas keluar wad</b> 180 hari (365 hari jika serius), termasuk fisio, kiropraktik &amp; akupunktur', '<b>Pre-hospitalisation</b> 90 days · <b>Post-hospitalisation</b> 180 days (365 if serious), incl. physio, chiro &amp; acupuncture')}</li>
           <li style="color:#fff">${t('<b>Pemindahan &amp; penghantaran pulang kecemasan</b> — sehingga USD1 juta', '<b>Emergency evacuation &amp; repatriation</b> — up to USD1 million')}</li>
         </ul>
         <div class="note">${dedNote}</div>
@@ -275,7 +278,7 @@ function renderIdaman() {
       </table>
       <div class="mini">${t('Bronze: tiada ganjaran tambahan. Hospitalisation Care dibayar sekali setahun semasa masuk wad. Keahlian AIA Vitality RM10/bulan. Sertai melalui app AIA+.', 'Bronze: no extra rewards. Hospitalisation Care paid once a year upon admission. AIA Vitality membership RM10/month. Join via the AIA+ app.')}${p300 ? t(' Healthy Retirement Bonus: pada umur 60 atau tahun sijil 10 (yang lebih lewat).', ' Healthy Retirement Bonus: from age 60 or certificate year 10, whichever is later.') : ''}</div>
       <div class="cta"><div><b>${t('Kekal sihat → dapat lebih', 'Stay healthy → earn more')}</b><br><span>${t('Langkah, pemeriksaan kesihatan &amp; saringan naikkan status Vitality anda.', 'Steps, health checks &amp; screenings raise your Vitality status.')}</span></div><div style="font-size:18pt">🏃</div></div>
-      <div class="mini" style="margin-top:2.5mm"><b style="color:var(--ink)">${t('Perlu tahu:', 'Good to know:')}</b> ${t("Tempoh bertenang 15 hari · tempoh tangguh 31 hari · caruman mungkin layak pelepasan cukai · tempoh menunggu terpakai (kecuali kecederaan) · kadar Tabarru' tidak dijamin dan meningkat ikut umur.", "15-day free-look · 31-day grace period · contributions may qualify for personal tax relief · waiting periods apply (except covered injury) · Tabarru' rates not guaranteed and increase with age.")}</div>
+      <div class="mini" style="margin-top:2.5mm"><b style="color:var(--ink)">${t('Perlu tahu:', 'Good to know:')}</b> ${t("Tempoh bertenang 15 hari · tempoh ihsan 31 hari · perlindungan berterusan 5 tahun pertama jika caruman dibayar tepat masa · tempoh menunggu perubatan 30 hari (120 hari untuk penyakit tertentu; kecuali kecederaan) · penyakit sedia ada tidak dilindungi · kadar Tabarru' tidak dijamin dan meningkat ikut umur.", "15-day free-look · 31-day grace period · 5-year no-lapse if contributions paid on time · medical waiting period 30 days (120 days for specified illnesses; injuries exempt) · pre-existing conditions excluded · Tabarru' rates not guaranteed and increase with age.")}</div>
     </div>
     <div>
       <div class="sec"><div class="n">5</div><h2>${t('Hospital Panel SMART AIA · Pulau Pinang', 'AIA SMART Panel Hospitals · Penang')}</h2></div>
@@ -516,7 +519,8 @@ function warnings() {
     const s = S.i, ps = s.persons.filter(p => p.name.trim() || num(p.m));
     if (!ps.length) w.push('Masukkan sekurang-kurangnya seorang (nama + caruman bulanan).');
     ps.forEach(p => { if (!num(p.m)) w.push(`Caruman bulanan ${p.name || '?'} kosong.`); if (!p.name.trim()) w.push('Ada orang tanpa nama.'); });
-    if (!num(s.sum)) w.push('Jumlah perlindungan Kematian/TPD kosong.');
+    if (!num(s.sum)) w.push('Jumlah perlindungan Kematian kosong.');
+    if (s.tpd === 'yes' && num(s.tpdSum) > num(s.sum) && num(s.sum)) w.push('Jumlah TPD melebihi jumlah asas. TPD ialah bayaran pendahuluan; semak dengan SQS.');
   } else {
     const { s, p, basic, saver, saverYears, age } = rezekiInputs();
     if (!s.name.trim()) w.push('Nama pelanggan kosong.');
@@ -583,6 +587,7 @@ function syncForm() {
   $('#formIdaman').classList.toggle('hide', S.prod !== 'idaman');
   $('#formRezeki').classList.toggle('hide', S.prod !== 'rezeki');
   $('#eduRow').classList.toggle('hide', S.r.use !== 'edu');
+  $('#tpdSumRow').classList.toggle('hide', S.i.tpd !== 'yes');
   $('#deathInputs').classList.toggle('hide', S.r.deathMode !== 'values');
   $('#dfLabel').textContent = S.r.use === 'retire' ? 'KWSP / i-Saraan' : S.r.use === 'edu' ? 'SSPN' : 'KWSP';
   $('[data-k="r.saverYears"]').placeholder = 'ikut tempoh (' + PLANS[S.r.plan].term + ')';
@@ -639,7 +644,7 @@ function init() {
   window.addEventListener('resize', () => { clearTimeout(window._rz); window._rz = setTimeout(fitPreview, 100); });
   window.addEventListener('beforeprint', () => { $('#doc').style.zoom = 1; });
   window.addEventListener('afterprint', fitPreview);
-  $('#asof').innerHTML = `<b>Data dalam app ini</b><br>ADSE fact sheet: ${DATA.asOf.adse} · Look-through: ${DATA.asOf.lookthrough}<br>Panel SMART Pulau Pinang: ${DATA.asOf.panel} · Manfaat produk: ${DATA.asOf.products}<br>Kematian/TPD Rezeki: manual (formula belum disahkan).`;
+  $('#asof').innerHTML = `<b>Data dalam app ini</b><br>ADSE fact sheet: ${DATA.asOf.adse} · Look-through: ${DATA.asOf.lookthrough}<br>Panel SMART Pulau Pinang: ${DATA.asOf.panel} · Manfaat produk: ${DATA.asOf.products} · Kontrak Idaman: ${DATA.asOf.idamanContract}<br>Kematian/TPD Rezeki: manual (formula belum disahkan).`;
   buildPersons(); buildDeath(); syncForm(); render();
 }
 
@@ -660,7 +665,7 @@ function doPrint() {
 
 function loadSample() {
   if (S.prod === 'idaman') {
-    Object.assign(S.i, { family: 'Khairil', persons: [{ name: 'Khairil', rel: 'self', m: '166' }, { name: 'Isteri', rel: 'spouse', m: '176' }], sum: '6000', term: '70', plan: '200', ded: 'none', area: 'both' });
+    Object.assign(S.i, { family: 'Khairil', persons: [{ name: 'Khairil', rel: 'self', m: '166' }, { name: 'Isteri', rel: 'spouse', m: '176' }], sum: '6000', tpd: 'yes', tpdSum: '', term: '70', plan: '200', ded: 'none', area: 'both' });
     buildPersons();
   } else {
     Object.assign(S.r, { name: 'Eddy', age: '40', use: 'retire', child: '', childAge: '', plan: '5Pay20', basic: '20000', saver: '10000', saverYears: '', adhoc: '', have: { gk: true, df: true, m1: false, m2: false }, deathMode: 'blank' });

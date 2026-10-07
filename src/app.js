@@ -28,7 +28,16 @@ const DATA = {
     200: { limit: 'RM1.5M', limitTxt: ['RM1.5 juta', 'RM1.5 million'], big: 'RM1.5', rb: 200, up: [300, 400], ncb: 1000, ppb: 500 },
     300: { limit: 'RM3M', limitTxt: ['RM3 juta', 'RM3 million'], big: 'RM3', rb: 300, up: [450, 600], ncb: 2500, ppb: 1000 },
   },
-  hospitals: [
+  // SMART panel hospitals by state. full:true = complete list from the AIA listing; false = partial (only some hospitals known).
+  states: [
+    ['penang', 'Pulau Pinang', 'Penang'], ['kedah', 'Kedah', 'Kedah'], ['perak', 'Perak', 'Perak'], ['perlis', 'Perlis', 'Perlis'],
+    ['selangor', 'Selangor', 'Selangor'], ['kl', 'W.P. Kuala Lumpur', 'Kuala Lumpur'], ['putrajaya', 'W.P. Putrajaya', 'Putrajaya'],
+    ['n9', 'Negeri Sembilan', 'Negeri Sembilan'], ['melaka', 'Melaka', 'Melaka'], ['johor', 'Johor', 'Johor'],
+    ['pahang', 'Pahang', 'Pahang'], ['terengganu', 'Terengganu', 'Terengganu'], ['kelantan', 'Kelantan', 'Kelantan'],
+    ['sabah', 'Sabah', 'Sabah'], ['sarawak', 'Sarawak', 'Sarawak'], ['labuan', 'W.P. Labuan', 'Labuan'],
+  ],
+  hospitals: {
+    penang: { full: true, list: [
     { a: 'island', nm: 'Island Hospital', plat: 1, ad: '308 Macalister Rd, George Town', ph: '04-238 3388' },
     { a: 'island', nm: 'Penang Adventist', plat: 1, ad: '465 Jalan Burma, George Town', ph: '04-222 7200' },
     { a: 'island', nm: 'Gleneagles Hospital Penang', ad: '1 Jalan Pangkor, George Town', ph: '04-222 9111' },
@@ -40,7 +49,19 @@ const DATA = {
     { a: 'mainland', nm: 'Sunway Medical Centre Penang', ad: 'Lebuh Tenggiri 2, Seberang Jaya', ph: '04-373 9191' },
     { a: 'mainland', nm: 'KPJ Penang Specialist Hospital', ad: 'Jalan Perda Utama, Bukit Mertajam', ph: '04-548 6688' },
     { a: 'mainland', nm: 'Bagan Specialist Centre', ad: 'Jalan Bagan Satu, Butterworth', ph: '04-371 0000' },
-  ],
+    ] },
+    kedah: { full: false, list: [
+      { nm: 'Pantai Hospital Sungai Petani', plat: 1, ad: 'Sungai Petani', ph: '04-442 8888' },
+      { nm: 'Metro Specialist Hospital', ad: 'Sungai Petani', ph: '04-423 8888' },
+      { nm: 'Pantai Hospital Laguna Merbok', ad: 'Sungai Petani', ph: '04-442 3888' },
+      { nm: 'Putra Medical Centre', ad: 'Alor Setar', ph: '04-734 2888' },
+      { nm: 'Kedah Medical Centre', ad: 'Alor Setar', ph: '04-730 8878' },
+    ] },
+    perak: { full: false, list: [
+      { nm: 'Columbia Asia Hospital Taiping', plat: 1, ad: 'Taiping', ph: '05-820 8888' },
+      { nm: 'Taiping Medical Centre', ad: 'Taiping', ph: '05-807 1049' },
+    ] },
+  },
 };
 
 /* ---------------- A-Enrich Rezeki calculator (port of rezeki_calc.py) ---------------- */
@@ -82,7 +103,7 @@ function runRezeki(plan, basic, saver, saverYears, adhoc, rate) {
 /* ---------------- state ---------------- */
 const blankState = () => ({
   prod: 'idaman', lang: 'bm',
-  i: { family: '', persons: [{ name: '', rel: 'self', m: '' }], sum: '', term: '70', plan: '200', ded: 'none', area: 'both' },
+  i: { family: '', persons: [{ name: '', rel: 'self', m: '' }], sum: '', term: '70', plan: '200', ded: 'none', state: 'penang', area: 'both' },
   r: { name: '', age: '', use: 'retire', child: '', childAge: '', plan: '5Pay20', basic: '', saver: '', saverYears: '', adhoc: '',
        have: { gk: false, df: false, m1: false, m2: false }, deathMode: 'blank',
        death: [{ y: 2, v: '' }, { y: 5, v: '' }, { y: 10, v: '' }, { y: 19, v: '' }] },
@@ -157,14 +178,23 @@ function renderIdaman() {
     also.push(t('<b>Manfaat penjaga harian</b> untuk pesakit muda &amp; warga emas', '<b>Daily guardian benefit</b> for young &amp; senior patients'));
   }
 
-  const hosp = DATA.hospitals.filter(h => s.area === 'both' || h.a === s.area);
+  const stRow = DATA.states.find(x => x[0] === s.state) || DATA.states[0];
+  const stName = t(stRow[1], stRow[2]);
+  const stData = DATA.hospitals[s.state];
+  const hosp = stData ? stData.list.filter(h => s.state !== 'penang' || s.area === 'both' || h.a === s.area) : [];
   let hHtml = '', no = 0, lastA = '';
   for (const h of hosp) {
-    if (h.a !== lastA) { hHtml += `<div class="area">${h.a === 'island' ? t('Pulau', 'Island') : 'Seberang Perai'}</div>`; lastA = h.a; }
+    if (h.a && h.a !== lastA) { hHtml += `<div class="area">${h.a === 'island' ? t('Pulau', 'Island') : 'Seberang Perai'}</div>`; lastA = h.a; }
     no++;
-    hHtml += `<div class="h${h.plat ? ' plat' : ''}"><div class="no">${no}</div><div><div class="nm">${esc(h.nm)}${h.plat ? '<span class="badge">Platinum</span>' : ''}</div><div class="ad">${esc(h.ad)} · <span class="ph">${h.ph}</span></div></div></div>`;
+    hHtml += `<div class="h${h.plat ? ' plat' : ''}"><div class="no">${no}</div><div><div class="nm">${esc(h.nm)}${h.plat ? '<span class="badge">Platinum</span>' : ''}</div><div class="ad">${h.ad ? esc(h.ad) + ' · ' : ''}<span class="ph">${h.ph}</span></div></div></div>`;
   }
-  hHtml += `<div class="h" style="background:var(--cream);border-style:dashed"><div class="no">★</div><div><div class="nm">${t('Platinum = lebih mudah', 'Platinum = more convenience')}</div><div class="ad">${t('Caj admin/kemasukan dikecualikan &amp; tiada deposit tunai semasa masuk wad (T&amp;S).', 'Admin/admission charges waived &amp; no cash deposit on admission (T&amp;C apply).')}</div></div></div>`;
+  if (!hosp.length) {
+    hHtml += `<div class="h" style="grid-column:1/-1;background:var(--cream);border-style:dashed;padding:3mm"><div class="no">🏥</div><div><div class="nm">${t(`Hospital panel SMART di ${stName}`, `SMART panel hospitals in ${stName}`)}</div><div class="ad" style="font-size:7.4pt;margin-top:.8mm">${t('Senarai terkini hospital, klinik GP dan pakar SMART berdekatan boleh disemak dalam app AIA+ (Panel Locator) atau aia.com.my. Ejen anda akan bantu pilih hospital panel yang paling dekat.', 'The latest SMART hospitals, GP clinics and specialists near you are in the AIA+ app (Panel Locator) or aia.com.my. Your agent will help you pick the nearest panel hospital.')}</div></div></div>`;
+  }
+  hHtml += `<div class="h" style="background:var(--cream);border-style:dashed${hosp.length % 2 ? '' : ';grid-column:1/-1'}"><div class="no">★</div><div><div class="nm">${t('Platinum = lebih mudah', 'Platinum = more convenience')}</div><div class="ad">${t('Caj admin/kemasukan dikecualikan &amp; tiada deposit tunai semasa masuk wad (T&amp;S).', 'Admin/admission charges waived &amp; no cash deposit on admission (T&amp;C apply).')}</div></div></div>`;
+  const hospNote = !hosp.length ? t('Senarai panel boleh berubah — sentiasa sahkan dalam app AIA+ sebelum masuk wad.', 'Panel list may change — always confirm in the AIA+ app before admission.')
+    : stData.full ? t(`Sumber: AIA SMART Panel Provider Listing (dikemas kini ${DATA.asOf.panel}). Senarai panel boleh berubah — sentiasa sahkan dalam app AIA+ sebelum masuk wad.`, `Source: AIA SMART Panel Provider Listing (last updated ${DATA.asOf.panel}). Panel list may change — always confirm in the AIA+ app panel locator before admission.`)
+    : t(`Antara hospital panel SMART di ${stName} (bukan senarai penuh; ${DATA.asOf.panel}). Senarai penuh &amp; terkini dalam app AIA+.`, `Selected SMART panel hospitals in ${stName} (not the full list; ${DATA.asOf.panel}). Full, latest list in the AIA+ app.`);
 
   const ncb = P.ncb, bars = Array.from({ length: 10 }, (_, i) => `<div class="bar"><span>${kk(ncb * (i + 1))}</span><i style="height:${(i + 1) * 10}%"></i></div>`).join('');
   const names = persons.map(p => esc(p.name)).filter(Boolean);
@@ -277,9 +307,9 @@ function renderIdaman() {
       <div class="mini" style="margin-top:2.5mm"><b style="color:var(--ink)">${t('Perlu tahu:', 'Good to know:')}</b> ${t("Tempoh bertenang 15 hari · tempoh ihsan 31 hari · perlindungan berterusan 5 tahun pertama jika caruman dibayar tepat masa · tempoh menunggu perubatan 30 hari (120 hari untuk penyakit tertentu; kecuali kecederaan) · penyakit sedia ada tidak dilindungi · kadar Tabarru' tidak dijamin dan meningkat ikut umur.", "15-day free-look · 31-day grace period · 5-year no-lapse if contributions paid on time · medical waiting period 30 days (120 days for specified illnesses; injuries exempt) · pre-existing conditions excluded · Tabarru' rates not guaranteed and increase with age.")}</div>
     </div>
     <div>
-      <div class="sec"><div class="n">5</div><h2>${t('Hospital Panel SMART AIA · Pulau Pinang', 'AIA SMART Panel Hospitals · Penang')}</h2></div>
+      <div class="sec"><div class="n">5</div><h2>${t(`Hospital Panel SMART AIA · ${stName}`, `AIA SMART Panel Hospitals · ${stName}`)}</h2></div>
       <div class="hgrid">${hHtml}</div>
-      <div class="mini">${t(`Sumber: AIA SMART Panel Provider Listing (dikemas kini ${DATA.asOf.panel}). Senarai panel boleh berubah — sentiasa sahkan dalam app AIA+ sebelum masuk wad.`, `Source: AIA SMART Panel Provider Listing (last updated ${DATA.asOf.panel}). Panel list may change — always confirm in the AIA+ app panel locator before admission.`)}</div>
+      <div class="mini">${hospNote}</div>
     </div>
   </div>
   <div class="foot"><span><b>${t('Penting:', 'Important:')}</b> ${t('Ringkasan ilustrasi, bukan sijil takaful. Manfaat, pengecualian &amp; tempoh menunggu ikut Ilustrasi Produk, PDS dan sijil. Permohonan tertakluk underwriting. AIA PUBLIC Takaful Bhd. ahli PIDM; manfaat dilindungi sehingga had tertentu.', 'This is a summary for illustration, not a takaful certificate. Benefits, exclusions &amp; waiting periods per Product Illustration, PDS and certificate. Application subject to underwriting. AIA PUBLIC Takaful Bhd. is a member of PIDM; benefits protected up to limits.')}</span><span style="white-space:nowrap">${t('Muka surat 2 / 2', 'Page 2 of 2')}</span></div>
@@ -516,6 +546,9 @@ function warnings() {
     if (!ps.length) w.push('Masukkan sekurang-kurangnya seorang (nama + caruman bulanan).');
     ps.forEach(p => { if (!num(p.m)) w.push(`Caruman bulanan ${p.name || '?'} kosong.`); if (!p.name.trim()) w.push('Ada orang tanpa nama.'); });
     if (!num(s.sum)) w.push('Jumlah perlindungan Kematian/TPD kosong.');
+    const hs = DATA.hospitals[s.state];
+    if (!hs) w.push('Tiada senarai hospital untuk negeri ini lagi — proposal tunjuk nota "semak app AIA+".');
+    else if (!hs.full) w.push('Senarai hospital negeri ini belum penuh (ditanda "antara hospital panel").');
   } else {
     const { s, p, basic, saver, saverYears, age } = rezekiInputs();
     if (!s.name.trim()) w.push('Nama pelanggan kosong.');
@@ -586,6 +619,7 @@ function syncForm() {
   $('#formIdaman').classList.toggle('hide', S.prod !== 'idaman');
   $('#formRezeki').classList.toggle('hide', S.prod !== 'rezeki');
   $('#eduRow').classList.toggle('hide', S.r.use !== 'edu');
+  $('#areaRow').classList.toggle('hide', S.i.state !== 'penang');
   $('#deathInputs').classList.toggle('hide', S.r.deathMode !== 'values');
   $('#dfLabel').textContent = S.r.use === 'retire' ? 'KWSP / i-Saraan' : S.r.use === 'edu' ? 'SSPN' : 'KWSP';
   $('[data-k="r.saverYears"]').placeholder = 'ikut tempoh (' + PLANS[S.r.plan].term + ')';
@@ -614,7 +648,7 @@ function init() {
   const panel = $('#panel');
   panel.addEventListener('input', e => {
     const el = e.target;
-    if (el.dataset.k) { setK(el.dataset.k, el.type === 'checkbox' ? el.checked : el.value); if (el.dataset.k.startsWith('a.')) saveAgent(); }
+    if (el.dataset.k) { setK(el.dataset.k, el.type === 'checkbox' ? el.checked : el.value); if (el.dataset.k.startsWith('a.')) saveAgent(); if (el.dataset.k === 'i.state') syncForm(); }
     else if (el.dataset.pk) { const [i, k] = el.dataset.pk.split('.'); S.i.persons[+i][k] = el.value; }
     else if (el.dataset.dk) { const [i, k] = el.dataset.dk.split('.'); S.r.death[+i][k] = el.value; }
     else return;
@@ -643,7 +677,8 @@ function init() {
   window.addEventListener('resize', () => { clearTimeout(window._rz); window._rz = setTimeout(fitPreview, 100); });
   window.addEventListener('beforeprint', () => { $('#doc').style.zoom = 1; });
   window.addEventListener('afterprint', fitPreview);
-  $('#asof').innerHTML = `<b>Data dalam app ini</b><br>ADSE fact sheet: ${DATA.asOf.adse} · Look-through: ${DATA.asOf.lookthrough}<br>Panel SMART Pulau Pinang: ${DATA.asOf.panel} · Manfaat produk: ${DATA.asOf.products} · Kontrak Idaman: ${DATA.asOf.idamanContract}<br>Kematian/TPD Rezeki: manual (formula belum disahkan).`;
+  $('#asof').innerHTML = `<b>Data dalam app ini</b><br>ADSE fact sheet: ${DATA.asOf.adse} · Look-through: ${DATA.asOf.lookthrough}<br>Panel SMART: P. Pinang penuh, Kedah/Perak separa (${DATA.asOf.panel}) · Manfaat produk: ${DATA.asOf.products} · Kontrak Idaman: ${DATA.asOf.idamanContract}<br>Kematian/TPD Rezeki: manual (formula belum disahkan).`;
+  $('#stateSel').innerHTML = DATA.states.map(([k, bm]) => { const d = DATA.hospitals[k]; return `<option value="${k}">${bm}${!d ? ' · tiada senarai' : d.full ? '' : ' · separa'}</option>`; }).join('');
   buildPersons(); buildDeath(); syncForm(); render();
 }
 
@@ -664,7 +699,7 @@ function doPrint() {
 
 function loadSample() {
   if (S.prod === 'idaman') {
-    Object.assign(S.i, { family: 'Khairil', persons: [{ name: 'Khairil', rel: 'self', m: '166' }, { name: 'Isteri', rel: 'spouse', m: '176' }], sum: '6000', term: '70', plan: '200', ded: 'none', area: 'both' });
+    Object.assign(S.i, { family: 'Khairil', persons: [{ name: 'Khairil', rel: 'self', m: '166' }, { name: 'Isteri', rel: 'spouse', m: '176' }], sum: '6000', term: '70', plan: '200', ded: 'none', state: 'penang', area: 'both' });
     buildPersons();
   } else {
     Object.assign(S.r, { name: 'Eddy', age: '40', use: 'retire', child: '', childAge: '', plan: '5Pay20', basic: '20000', saver: '10000', saverYears: '', adhoc: '', have: { gk: true, df: true, m1: false, m2: false }, deathMode: 'blank' });

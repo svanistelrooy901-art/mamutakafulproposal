@@ -82,6 +82,10 @@ main{overflow:auto;-webkit-overflow-scrolling:touch;padding:20px;min-width:0}
 .panel details[open].card summary{margin-bottom:10px}
 .panel .hide{display:none!important}
 
+.panel .hospbox{margin-top:10px;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.panel .hospbox summary{font-weight:700;font-size:13.5px;cursor:pointer}
+.panel .hosplist{display:grid;gap:6px;margin-top:8px;max-height:320px;overflow:auto}
+.panel .hosplist .chk{min-height:40px;font-size:13px}
 /* preview */
 .toolbar{display:flex;align-items:center;gap:10px;margin:0 auto 14px;max-width:820px}
 .toolbar .status{font-size:13px;color:var(--muted)}
@@ -134,6 +138,8 @@ main{overflow:auto;-webkit-overflow-scrolling:touch;padding:20px;min-width:0}
 .tC .dc .v.blank{color:#C9BFC3;font-weight:500;letter-spacing:.04em}
 .tC .dc.hi .v.blank{color:#FFD7DD}
 .tA .lb .t,.tC .pos .tl{overflow-wrap:anywhere}
+.tA .h .no.sm{background:var(--red);color:#fff}.tA .h .no.gp{background:#E3E0E2;color:#5A5560}
+.tA .dot{display:inline-block;width:2.4mm;height:2.4mm;border-radius:50%;margin-right:1mm;vertical-align:-.2mm}.tA .dot.sm{background:var(--red)}.tA .dot.gp{background:#BDB7BB}
 .tC .dc .v.blank{white-space:nowrap}
 /* auto-fit levels (added when a page overflows) */
 .tC.nodeath .page:first-of-type .sec{margin:6mm 0 3mm}.tC.nodeath .page:first-of-type .snap{padding-top:6mm!important}.tC.nodeath .tagline{margin-bottom:3mm}.tC.nodeath .lineup{margin-top:3mm}.tC.nodeath .sc{padding:3.6mm 3.6mm}.tC.nodeath .sc .tv{font-size:18pt}
@@ -526,8 +532,10 @@ main{overflow:auto;-webkit-overflow-scrolling:touch;padding:20px;min-width:0}
           <h3><span class="n">3</span>A-Plus Health360-i</h3>
           <label class="f"><span>Pelan</span><div class="pick" data-pick="i.plan"><button data-v="200">Plan 200</button><button data-v="300">Plan 300</button></div></label>
           <label class="f"><span>Pilihan deductible</span><div class="pick" data-pick="i.ded"><button data-v="none">Tiada</button><button data-v="d500">RM500</button><button data-v="smart">RM500 + SMART</button></div></label>
-          <label class="f"><span>Negeri · senarai hospital SMART</span><select id="stateSel" data-k="i.state"></select></label>
-          <label class="f" id="areaRow"><span>Kawasan (Pulau Pinang)</span><div class="pick" data-pick="i.area"><button data-v="both">Pulau + SP</button><button data-v="island">Pulau</button><button data-v="mainland">Seberang Perai</button></div></label>
+          <label class="f"><span>Negeri · hospital panel</span><select id="stateSel" data-k="i.state"></select></label>
+          <label class="f" id="areaRow"><span>Kawasan</span><div class="pick" data-pick="i.area" id="areaPick"></div></label>
+          <label class="f"><span>Jenis panel</span><div class="pick" data-pick="i.ptype"><button data-v="all">SMART + panel umum</button><button data-v="smart">SMART sahaja</button></div></label>
+          <details class="hospbox"><summary>🏥 Pilih hospital untuk proposal · <span id="hospCount"></span></summary><div id="hospList" class="hosplist"></div><div class="hint">Max 11 hospital muat dalam proposal. Tukar negeri/kawasan/jenis = pilihan ditetapkan semula.</div></details>
         </div>
       </div>
 
@@ -608,7 +616,7 @@ main{overflow:auto;-webkit-overflow-scrolling:touch;padding:20px;min-width:0}
    ===================================================================== */
 
 const DATA = {
-  asOf: { adse: '31 Jul 2026', lookthrough: '6 Okt 2026', panel: '10 Apr 2025', products: 'Okt 2026', idamanContract: 'S022615B09 (H360-i T1088T 06/26)' },
+  asOf: { adse: '31 Jul 2026', lookthrough: '6 Okt 2026', panel: '9 Feb 2026', products: 'Okt 2026', idamanContract: 'S022615B09 (H360-i T1088T 06/26)' },
   adse: {
     anchor: 49.6, rocket: 51.3,
     perf: [
@@ -630,38 +638,166 @@ const DATA = {
     200: { limit: 'RM1.5M', limitTxt: ['RM1.5 juta', 'RM1.5 million'], big: 'RM1.5', rb: 200, up: [300, 400], ncb: 1000, ppb: 500 },
     300: { limit: 'RM3M', limitTxt: ['RM3 juta', 'RM3 million'], big: 'RM3', rb: 300, up: [450, 600], ncb: 2500, ppb: 1000 },
   },
-  // SMART panel hospitals by state. full:true = complete list from the AIA listing; false = partial (only some hospitals known).
+  // Panel hospitals by state, from "Individual AIA Panel Hospital Listing" effective 9 Feb 2026 (s:1 = SMART panel, s:0 = General panel).
   states: [
     ['penang', 'Pulau Pinang', 'Penang'], ['kedah', 'Kedah', 'Kedah'], ['perak', 'Perak', 'Perak'], ['perlis', 'Perlis', 'Perlis'],
-    ['selangor', 'Selangor', 'Selangor'], ['kl', 'W.P. Kuala Lumpur', 'Kuala Lumpur'], ['putrajaya', 'W.P. Putrajaya', 'Putrajaya'],
+    ['klangvalley', 'Lembah Klang (KL / Selangor)', 'Klang Valley (KL / Selangor)'],
     ['n9', 'Negeri Sembilan', 'Negeri Sembilan'], ['melaka', 'Melaka', 'Melaka'], ['johor', 'Johor', 'Johor'],
     ['pahang', 'Pahang', 'Pahang'], ['terengganu', 'Terengganu', 'Terengganu'], ['kelantan', 'Kelantan', 'Kelantan'],
     ['sabah', 'Sabah', 'Sabah'], ['sarawak', 'Sarawak', 'Sarawak'], ['labuan', 'W.P. Labuan', 'Labuan'],
   ],
+  areas: {
+    penang: [['island', 'Pulau', 'Island'], ['mainland', 'Seberang Perai', 'Seberang Perai']],
+    klangvalley: [['kl', 'Kuala Lumpur', 'Kuala Lumpur'], ['sel', 'Selangor', 'Selangor']],
+  },
   hospitals: {
+    klangvalley: { full: true, list: [
+      {"nm": "Alty Orthopaedic Hospital", "ad": "Ground Floor, Menara ALTY, 187 Jalan Ampang, 50450 Kuala Lumpur", "ph": "03-2787 0500", "s": 1, "a": "kl"},
+      {"nm": "Cengild G.I Medical Centre", "ad": "Unit 2-3 & 2-4, Nexus @ Bangsar South, No. 7, Jalan Kerinchi, 59200 Kuala Lumpur", "ph": "03-2242 7000", "s": 1, "a": "kl"},
+      {"nm": "Columbia Asia Hospital Setapak", "ad": "No. 1, Jalan Danau Saujana, off Jln Genting Klang, 53300 Kuala Lumpur", "ph": "03-4145 9999", "s": 1, "a": "kl"},
+      {"nm": "Damai Service Hospital (HQ)", "ad": "109-119, Jln Sultan Azlan Shah, 51200 Kuala Lumpur", "ph": "03-4043 4900", "s": 1, "a": "kl"},
+      {"nm": "Institut Jantung Negara", "ad": "145, Jalan Tun Razak, 50400 Kuala Lumpur", "ph": "03-2617 8200", "s": 1, "a": "kl"},
+      {"nm": "KMI Taman Desa Medical Centre", "ad": "45, Jalan Desa, Taman Desa, 58100 Kuala Lumpur", "ph": "03-7982 6500", "s": 1, "a": "kl"},
+      {"nm": "KPJ Sentosa KL Specialist Hospital", "ad": "36, Jalan Chemur, Kompleks Damai, 50400 Kuala Lumpur", "ph": "03-4043 7166", "s": 1, "a": "kl"},
+      {"nm": "KPJ Tawakkal Specialist Hospital", "ad": "No 1, Jalan Pahang Barat, 53000 Kuala Lumpur", "ph": "03-4026 7777", "s": 1, "a": "kl"},
+      {"nm": "Pantai Hospital Ampang", "ad": "Jalan Perubatan 1, Pandan Indah, 55100 Kuala Lumpur", "ph": "03-4289 2828", "s": 1, "a": "kl"},
+      {"nm": "Pantai Hospital Kuala Lumpur", "ad": "8, Jalan Bukit Pantai, 59100 Kuala Lumpur", "ph": "03-2296 0888", "s": 1, "a": "kl"},
+      {"nm": "Sunway Medical Centre Velocity", "ad": "Lingkaran SV, Sunway Velocity, 55100 Kuala Lumpur", "ph": "03-9772 9191", "s": 1, "a": "kl"},
+      {"nm": "Tung Shin Hospital", "ad": "No. 102, Jalan Pudu, 55100 Kuala Lumpur", "ph": "03-2037 2288", "s": 1, "a": "kl"},
+      {"nm": "UKM Specialist Centre", "ad": "7th Floor, Clinical Block, UKM Medical Centre, Jalan Yaacob Latif, 56000 Cheras", "ph": "03-2332 9222", "s": 1, "a": "kl"},
+      {"nm": "Cardiac Vascular Sentral Kuala Lumpur (CVSKL)", "ad": "Jalan Stesen Sentral 5, Kuala Lumpur Sentral, 50470 Kuala Lumpur", "ph": "03-2276 7000", "s": 0, "a": "kl"},
+      {"nm": "Columbia Asia Hospital Bukit Jalil", "ad": "No.9, Jalan Jalil Perkasa 7, Bukit Jalil, 57000 Kuala Lumpur", "ph": "03-8657 9888", "s": 0, "a": "kl"},
+      {"nm": "Gleneagles Hospital Kuala Lumpur", "ad": "282-286, Jalan Ampang, 50450 Kuala Lumpur", "ph": "03-4141 3000", "s": 0, "a": "kl"},
+      {"nm": "Hospital Pakar Pusrawi Kuala Lumpur", "ad": "Lot 149, Jln Tun Razak, 50400 Kuala Lumpur", "ph": "03-2687 5000", "s": 0, "a": "kl"},
+      {"nm": "KPJ Damansara Specialist Hospital 2 (DSH2)", "ad": "No 1 , Jalan Bukit Lanjan 3, Bukit Lanjan, 60000 Kuala Lumpur", "ph": "03-7717 3000", "s": 0, "a": "kl"},
+      {"nm": "Pantai Hospital Cheras", "ad": "No 1, Jalan 1/96A, Taman Cheras Makmur, 56100 Kuala Lumpur", "ph": "03-9145 2888", "s": 0, "a": "kl"},
+      {"nm": "Parkcity Medical Centre", "ad": "No 2, Jalan Intisari Perdana, Desa Parkcity, 52200 Kuala Lumpur", "ph": "03-5639 1616", "s": 0, "a": "kl"},
+      {"nm": "Assunta Hospital", "ad": "Jalan Templer, 46990 Petaling Jaya", "ph": "03-7872 3000", "s": 1, "a": "sel"},
+      {"nm": "Avisena Specialist Hospital", "ad": "4, Jalan Ikhtisas, Seksyen 14, 40000 Shah Alam", "ph": "03-5515 1888", "s": 1, "a": "sel"},
+      {"nm": "Avisena Womens and Childrens Specialist Hospital", "ad": "No.3, Jalan Perdagangan 14/4, Seksyen 14, 40000 Shah Alam", "ph": "03-5515 1888", "s": 1, "a": "sel"},
+      {"nm": "Bukit Tinggi Medical Centre", "ad": "Lot 83211, Persiaran Batu Nilam, Bandar Bukit Tinggi 1, 41200 Klang", "ph": "03-5639 1515", "s": 1, "a": "sel"},
+      {"nm": "Columbia Asia Hospital Bukit Rimau", "ad": "3, Persiaran Anggerik Eria, Bukit Rmau, Seksyen 32, 40460 Shah Alam", "ph": "03-5125 9999", "s": 1, "a": "sel"},
+      {"nm": "Columbia Asia Hospital Cheras", "ad": "Lot 33107, Jalan Suakasih, 43200 Cheras", "ph": "03-9086 9999", "s": 1, "a": "sel"},
+      {"nm": "Columbia Asia Hospital Klang", "ad": "PT 71153, Jalan Mahkota 1/KU 2, Mutiara Bukit Raja 2, KM 2, Off Jalan Meru, 41050 Klang", "ph": "03-3346 7999", "s": 1, "a": "sel"},
+      {"nm": "Damansara Specialist Hospital", "ad": "119, Jalan SS 20/10, Damansara Utama, 47400 Petaling Jaya", "ph": "03-7718 1000", "s": 1, "a": "sel"},
+      {"nm": "KPJ Kajang Specialist Hospital", "ad": "Batu 14, Jalan Cheras, 43000 Kajang, 43000 Kajang", "ph": "03-8769 2999", "s": 1, "a": "sel"},
+      {"nm": "KPJ Rawang Specialist Hospital", "ad": "Jalan Rawang, Bandar Baru Rawang, 48000 Rawang", "ph": "03-6099 8999", "s": 1, "a": "sel"},
+      {"nm": "MSU Medical Centre", "ad": "Jln Boling Padang 13/64, Section 13, 40100 Shah Alam", "ph": "03-5526 2600", "s": 1, "a": "sel"},
+      {"nm": "Pantai Hospital Klang", "ad": "Lot 5921, Persiaran Raja Muda Musa, 41200 Klang", "ph": "03-3258 5500", "s": 1, "a": "sel"},
+      {"nm": "Sentosa Specialist Hospital", "ad": "No. 27-29, Lorong Temenggung 15-A, 41200 Klang", "ph": "03-5162 8814", "s": 1, "a": "sel"},
+      {"nm": "Sri Kota Specialist Medical Centre", "ad": "Jalan Mohet, 41000 Klang", "ph": "03-3375 7799", "s": 1, "a": "sel"},
+      {"nm": "Subang Jaya Medical Centre", "ad": "1, Jalan SS 12/1A, 47500 Subang Jaya", "ph": "03-5639 1212", "s": 1, "a": "sel"},
+      {"nm": "Sunway Medical Centre", "ad": "No. 5, Jalan Lagoon Selatan, Bandar Sunway, 47500, Subang", "ph": "03-7491 9191", "s": 1, "a": "sel"},
+      {"nm": "Sunway Medical Centre Damansara", "ad": "No. 2, Jalan PJU 5/1a, Kota Damansara, PJU 5, 47810 Petaling Jaya", "ph": "03-8966 9191", "s": 1, "a": "sel"},
+      {"nm": "Ampang Puteri Specialist Hospital", "ad": "1, Jalan Mamanda 9, Taman Dato’ Ahmad Razali, 68000 Ampang", "ph": "03-4289 5000", "s": 0, "a": "sel"},
+      {"nm": "Ara Damansara Medical Centre", "ad": "2, Jalan Lapangan Terbang Subang, Seksyen U2, 40150 Shah Alam", "ph": "03-5639 1888", "s": 0, "a": "sel"},
+      {"nm": "Beacon Hospital", "ad": "1 Jalan 215, Off Jalan Templer, Section 51, 46050 Petaling Jaya", "ph": "03-7787 2992", "s": 0, "a": "sel"},
+      {"nm": "Columbia Asia Hospital Petaling Jaya", "ad": "Lot 69 Jalan 13/6 Seksyen 13, 46200 Petaling Jaya", "ph": "03-7949 9999", "s": 0, "a": "sel"},
+      {"nm": "Columbia Asia Hospital Puchong", "ad": "1, Lebuh Puteri, Bandar Puteri Puchong, 47100 Puchong", "ph": "03-8064 8688", "s": 0, "a": "sel"},
+      {"nm": "Hospital Pakar An-Nur", "ad": "Jalan Gerbang Wawasan 1, Seksyen 15, 43650 Bandar Baru Bangi", "ph": "03-8923 5500", "s": 0, "a": "sel"},
+      {"nm": "KPJ Klang Specialist Hospital", "ad": "No 102, Persiaran Rajawali / KU 1, Bandar Baru Klang, 41150, Klang", "ph": "03-3377 7888", "s": 0, "a": "sel"},
+      {"nm": "KPJ Selangor Specialist Hospital", "ad": "Lot 1, Jalan Singa 20/1, Seksyen 20, 40300 Shah Alam", "ph": "03-5543 1111", "s": 0, "a": "sel"},
+      {"nm": "Pusat Pakar Ortopedik OSC Specialist Centre", "ad": "G-1-1 to G-6-1, Damen USJ, Persiaran Kewajipan, USJ 1, 47600 Subang Jaya", "ph": "03-80843636", "s": 0, "a": "sel"},
+      {"nm": "Sungai Long Specialist Hospital", "ad": "PT 21147 Persiaran Sungai Long 1, Bandar Sungai Long, 43000 Kajang", "ph": "03-9010 3788", "s": 0, "a": "sel"},
+      {"nm": "Thomson Hospital Kota Damansara", "ad": "11, Jalan Teknologi, Kota Damansara, 47810 Petaling Jaya", "ph": "03-6287 1111", "s": 0, "a": "sel"},
+      {"nm": "Tun Hussein Onn National Eye Hospital", "ad": "2, Lorong Utara (B), 46200 Petaling Jaya", "ph": "03-7718 1488", "s": 0, "a": "sel"},
+    ] },
+    johor: { full: true, list: [
+      {"nm": "Bandar Dato’ Onn Specialist Hospital", "ad": "Jalan Bukit Mutiara, Bandar Dato Onn,81100 Johor Bahru", "ph": "07-301 1000", "s": 1},
+      {"nm": "Columbia Asia Hospital Iskandar Puteri", "ad": "Persiaran Afiat, Taman Kesihatan Afiat, 79250 Nusajaya", "ph": "07-233 9999", "s": 1},
+      {"nm": "Columbia Asia Hospital Tebrau", "ad": "Persiaran Southkey 5, Taman Southkey, 80150 Johor Bharu", "ph": "07-272 9999", "s": 1},
+      {"nm": "Johor Specialist Hospital", "ad": "39-B, Jalan Abdul Samad, Kolam Ayer, 80100 Johor Bahru", "ph": "07-225 3000", "s": 1},
+      {"nm": "KPJ Bandar Maharani Specialist Hospital", "ad": "73-1, Jalan Stadium, Kampung Baharu, 84000 Muar", "ph": "06-956 4500", "s": 1},
+      {"nm": "KPJ Batu Pahat Specialist Hospital", "ad": "No.1 Jalan Mutiara Gading Utama, Taman Mutiara Gading, 83000 Batu Pahat", "ph": "07-457 1000", "s": 1},
+      {"nm": "KPJ Kluang Specialist Hospital", "ad": "Jalan Saujana Utama, Taman Saujana, 86000 Kluang", "ph": "07-771 8999", "s": 1},
+      {"nm": "KPJ Pasir Gudang Specialist Hospital", "ad": "Jalan Persiaran Dahlia 2, Taman Bukit Dahlia, 81700 Pasir Gudang", "ph": "07-257 3999", "s": 1},
+      {"nm": "Pantai Hospital Batu Pahat", "ad": "9S, Jalan Bintang 1, Taman Koperasi Bahagia, 83000 Batu Pahat", "ph": "07-433 8811", "s": 1},
+      {"nm": "Regency Specialist Hospital", "ad": "No 1, Jalan Suria, Bandar Seri Alam, 81750 Masai, Johor Bahru", "ph": "07-381 7700", "s": 1},
+      {"nm": "Hospital Penawar", "ad": "15-18, Pusat Perniagaan Pasir Gudang, 81700 Pasir Gudang", "ph": "07-252 1800", "s": 0},
+      {"nm": "Kempas Medical Centre", "ad": "Lot Ptd 7522, Jalan Kempas Baru, 81200, Kempas, Johor Bahru", "ph": "07-236 8999", "s": 0},
+      {"nm": "Puteri Specialist Hospital", "ad": "33, Jalan Tun Abdul Razak (Susur 5), Larkin Jaya, 80350 Johor Bahru", "ph": "07-225 3222", "s": 0},
+      {"nm": "Sena Specialist Hospital Segamat", "ad": "Jln Utama 3/10, 85000 Segamat, Johor Darul Ta’zim", "ph": "07-906 3111", "s": 0},
+    ] },
+    n9: { full: true, list: [
+      {"nm": "Aurelius Hospital Negeri Sembilan", "ad": "PT 13717, Jalan BBN 2/1, Bandar Baru Nilai, 71800 Nilai", "ph": "06-850 5000", "s": 1},
+      {"nm": "Columbia Asia Hospital Seremban", "ad": "292 & Lot PT1904, Jalan Haruan 2, Oakland Commercial Centre, 70300 Seremban", "ph": "06-601 1988", "s": 1},
+      {"nm": "Salam Senawang Specialist Hospital", "ad": "No 234-243, Jalan Lavender Heights 2, Lavender Business Square, 70450 Senawang", "ph": "06-675 1188", "s": 1},
+      {"nm": "UCSI Hospital", "ad": "No 2 Avenue, 3, Persiaran Springhill, 71010 Port Dickson", "ph": "06-648 8888", "s": 1},
+      {"nm": "CMH Specialist Hospital", "ad": "Lot 3900, Jalan Tun Dr. Ismail, 70200 Seremban", "ph": "06-763 1688", "s": 0},
+      {"nm": "KPJ Seremban Specialist Hospital", "ad": "Lot PT 6219 & 6220, Jalan Tioman 1, Kemayan Square, 70200 Seremban", "ph": "06-768 6000", "s": 0},
+      {"nm": "Mawar Medical Centre", "ad": "No 71, Jalan Rasah, 70300 Seremban", "ph": "06-6764 7048", "s": 0},
+    ] },
+    melaka: { full: true, list: [
+      {"nm": "Mahkota Medical Centre", "ad": "No 3, Mahkota Melaka, Jalan Merdeka, 75000 Melaka", "ph": "06-285 2999", "s": 1},
+      {"nm": "Putra Specialist Hospital Melaka", "ad": "169, Jalan Bendahara, 75100 Melaka", "ph": "06-283 5888", "s": 1},
+      {"nm": "Oriental Melaka Straits Medical Centre", "ad": "Pusat Perubatan Klebang, 75200 Melaka", "ph": "06-315 8888", "s": 0},
+      {"nm": "Pantai Hospital Melaka", "ad": "No 2418-1, KM 8, Lebuh Ayer Keroh, 75450 Melaka", "ph": "06-231 9999", "s": 0},
+    ] },
+    pahang: { full: true, list: [
+      {"nm": "Aurelius Hospital Pahang", "ad": "Lot 1, 3, 5 & 7, Wisma MUIP, Jalan Gambut, 25000 Kuantan", "ph": "09-513 7110", "s": 1},
+      {"nm": "KPJ Pahang Specialist Hospital", "ad": "Jalan Tanjung Lumpur, 26060 Kuantan", "ph": "09-511 2692", "s": 1},
+      {"nm": "IIUM Medical Specialist Centre", "ad": "Kulliyyah of Medicine, IIUM Indera Mahkota, 25200 Kuantan", "ph": "09-573 0380", "s": 0},
+      {"nm": "KMI Kuantan Medical Centre", "ad": "Jalan Tun Razak, Bandar Indera Mahkota, 25200 Kuantan", "ph": "09-590 2828", "s": 0},
+    ] },
+    terengganu: { full: true, list: [
+      {"nm": "Salam Specialist Hospital Kuala Terengganu", "ad": "Lot 4075, Jalan Engku Sar, 20300 Kuala Terengganu", "ph": "09-620 0200", "s": 1},
+      {"nm": "KMI Kuala Terengganu Medical Centre", "ad": "Lot 3963, Jalan Sultan Mahmud, 20400 Kuala Terengganu", "ph": "09-637 8888", "s": 0},
+    ] },
+    kelantan: { full: true, list: [
+      {"nm": "KPJ Perdana Specialist Hospital", "ad": "Lot PT 37 & 600, Seksyen 14, Jalan Bayam, 15200 Kota Bahru", "ph": "09-745 8000", "s": 1},
+      {"nm": "Kota Bharu Medical Centre", "ad": "PT 179 - 184, Jalan Sultan Yahya Petra, Lundang, 15200 Kota Bharu", "ph": "09-743 3399", "s": 0},
+    ] },
+    perlis: { full: true, list: [
+      {"nm": "KPJ Perlis Specialist Hospital", "ad": "No. 77, Jalan Dato Wan Ahmad, 01000 Kangar", "ph": "04-970 7777", "s": 1},
+    ] },
+    kedah: { full: true, list: [
+      {"nm": "Metro Specialist Hospital", "ad": "1, Lorong Metro, 08000 Sungai Petani", "ph": "04-423 8888", "s": 1},
+      {"nm": "Pantai Hospital Sungai Petani", "ad": "No 1, Pesiaran Cempaka, Bandar Amanjaya, 08000 Sungai Petani", "ph": "04-442 8888", "s": 1},
+      {"nm": "Putra Medical Centre", "ad": "888, Jalan Sekerat, Off Jalan Putra, 05100 Alor Setar", "ph": "04-734 2888", "s": 1},
+      {"nm": "Aurelius Hospital Alor Setar", "ad": "No B-5, Persiaran Bandar Baru Mergong, Jalan Perusahaan 1, Bandar Baru Mergong, 05150 Alor Setar", "ph": "04-7366970", "s": 0},
+      {"nm": "Kedah Medical Centre", "ad": "175, Kampung Pumpong, 05250 Alor Setar", "ph": "04-730 8878", "s": 0},
+      {"nm": "Pantai Hospital Laguna Merbok", "ad": "No 1, Lorong BLM 1/10, Bandar Laguna Merbok, 08000 Sungai Petani", "ph": "04-442 3888", "s": 0},
+    ] },
+    perak: { full: true, list: [
+      {"nm": "Anson Bay Medical Centre", "ad": "Lot 992, Batu 3 ½, Jalan Maharajalela, 36000 Teluk Intan", "ph": "05-6232 999", "s": 1},
+      {"nm": "Columbia Asia Hospital Taiping", "ad": "No 5, Jalan Perwira, 34000 Taiping", "ph": "05-820 8888", "s": 1},
+      {"nm": "Hospital Fatimah", "ad": "1, Leboh Chew Peng Loon, Off Jalan Dato’ Lau Pak Khuan, Ipoh Garden, 31400 Ipoh", "ph": "05-545 5777", "s": 1},
+      {"nm": "KPJ Sri Manjung Specialist Hospital", "ad": "Lot 14777 & Lot 14778, Jalan Lumut, 32000 Sitiawan", "ph": "05-691 8153", "s": 1},
+      {"nm": "Pantai Hospital Manjung", "ad": "Jalan PPMP 1, Pusat Perniagaan Manjung Point, 32040 Seri Manjung", "ph": "05-689 8555", "s": 1},
+      {"nm": "Perak Community Specialist Hospital", "ad": "277, Jalan Raja Permaisuri Bainun, 30250 Ipoh", "ph": "05-241 9000", "s": 1},
+      {"nm": "Sunway Medical Centre Ipoh", "ad": "No.2, Persiaran Sunway, Sunway City Ipoh, 31150 Ipoh,", "ph": "05-871 1919", "s": 1},
+      {"nm": "Taiping Medical Centre", "ad": "45-49, Jalan Medan Taiping 2, 34000 Taiping", "ph": "05-807 1049", "s": 1},
+      {"nm": "Hospital Seri Botani", "ad": "No. 3, Dataran Botani 2, Bandar Seri Botani, 31350 Ipoh", "ph": "05-226 2777", "s": 0},
+      {"nm": "Ipoh Specialist Hospital", "ad": "26, Jalan Raja Dihilir, 30350 Ipoh", "ph": "05-240 8777", "s": 0},
+      {"nm": "Pantai Hospital Ipoh", "ad": "126, Jalan Tambun, Taman Ipoh, 31400 Ipoh", "ph": "05-540 5555", "s": 0},
+    ] },
     penang: { full: true, list: [
-    { a: 'island', nm: 'Island Hospital', plat: 1, ad: '308 Macalister Rd, George Town', ph: '04-238 3388' },
-    { a: 'island', nm: 'Penang Adventist', plat: 1, ad: '465 Jalan Burma, George Town', ph: '04-222 7200' },
-    { a: 'island', nm: 'Gleneagles Hospital Penang', ad: '1 Jalan Pangkor, George Town', ph: '04-222 9111' },
-    { a: 'island', nm: 'Loh Guan Lye Specialist Centre', ad: '238 Jalan Macalister, George Town', ph: '04-238 8888' },
-    { a: 'island', nm: 'Hospital Lam Wah Ee', ad: '141 Jln Tan Sri Teh Ewe Lim', ph: '04-652 8888' },
-    { a: 'island', nm: 'Pantai Hospital Penang', ad: '82 Jalan Tengah, Bayan Baru', ph: '04-643 3888' },
-    { a: 'island', nm: 'Kek Lok Si Charitable Hosp.', ad: '623 Jln Balik Pulau, Ayer Itam', ph: '04-299 9333' },
-    { a: 'island', nm: 'Mount Miriam Cancer Hosp.', ad: '23 Jalan Bulan, Tanjung Bungah', ph: '04-892 3999' },
-    { a: 'mainland', nm: 'Sunway Medical Centre Penang', ad: 'Lebuh Tenggiri 2, Seberang Jaya', ph: '04-373 9191' },
-    { a: 'mainland', nm: 'KPJ Penang Specialist Hospital', ad: 'Jalan Perda Utama, Bukit Mertajam', ph: '04-548 6688' },
-    { a: 'mainland', nm: 'Bagan Specialist Centre', ad: 'Jalan Bagan Satu, Butterworth', ph: '04-371 0000' },
+      {"nm": "Gleneagles Hospital Penang", "ad": "No 1, Jalan Pangkor, 10050 Georgetown", "ph": "04-222 9111", "s": 1, "a": "island"},
+      {"nm": "Hospital Lam Wah Ee", "ad": "141, Jalan Tan Sri Teh Ewe Lim, 11600 Penang", "ph": "04-652 8888", "s": 1, "a": "island"},
+      {"nm": "Island Hospital", "ad": "308, Macalister Road, 10450 George Town", "ph": "04-238 3388", "s": 1, "a": "island"},
+      {"nm": "Kek Lok Si Charitable Hospital", "ad": "623, Jln Balik Pulau, 11500 Ayer Itam", "ph": "04-299 9333", "s": 1, "a": "island"},
+      {"nm": "Mount Miriam Cancer Hospital", "ad": "23, Jalan Bulan, Fettes Park, 11200 Tanjung Bungah", "ph": "04-892 3999", "s": 1, "a": "island"},
+      {"nm": "Loh Guan Lye Specialist Centre", "ad": "238, Jalan Macalister, 10450 Georgetown", "ph": "04-238 8888", "s": 0, "a": "island"},
+      {"nm": "Pantai Hospital Penang", "ad": "82, Jalan Tengah, Bayan Baru, 11900 Bayan Lepas", "ph": "04-643 3888", "s": 0, "a": "island"},
+      {"nm": "Penang Adventist Hospital", "ad": "465, Jalan Burma, 10350 Georgetown", "ph": "04-222 7200", "s": 0, "a": "island"},
+      {"nm": "Bagan Specialist Centre", "ad": "Jalan Bagan Satu, 13400 Butterworth", "ph": "04-371 0000", "s": 1, "a": "mainland"},
+      {"nm": "Sunway Medical Centre Penang", "ad": "3106, Lebuh Tenggiri 2, Pusat Bandar Seberang Jaya, 13700 Perai", "ph": "04-373 9191", "s": 1, "a": "mainland"},
+      {"nm": "KPJ Penang Specialist Hospital", "ad": "570, Jalan Perda Utama, Bandar Perda, 14000 Bukit Mertajam", "ph": "04-548 6688", "s": 0, "a": "mainland"},
     ] },
-    kedah: { full: false, list: [
-      { nm: 'Pantai Hospital Sungai Petani', plat: 1, ad: 'Sungai Petani', ph: '04-442 8888' },
-      { nm: 'Metro Specialist Hospital', ad: 'Sungai Petani', ph: '04-423 8888' },
-      { nm: 'Pantai Hospital Laguna Merbok', ad: 'Sungai Petani', ph: '04-442 3888' },
-      { nm: 'Putra Medical Centre', ad: 'Alor Setar', ph: '04-734 2888' },
-      { nm: 'Kedah Medical Centre', ad: 'Alor Setar', ph: '04-730 8878' },
+    sabah: { full: true, list: [
+      {"nm": "Jesselton Medical Centre", "ad": "Metro Town, Jalan Bunga Ulam Raja, Jalan Lintas, Off Jalan Tuaran, 88300 Kota Kinabalu", "ph": "088-366 333", "s": 1},
+      {"nm": "KPJ Sabah Specialist Hospital", "ad": "Lot No.2 Off, Jalan Damai, Luyang Commercial Centre, 88300 Kota Kinabalu", "ph": "088-322 000", "s": 1},
+      {"nm": "Gleneagles Hospital Kota Kinabalu", "ad": "Riverson@Sembulan, Block A-1, Lorong Riverson@Sembulan, 88100 Kota Kinabalu", "ph": "088-518 888", "s": 0},
     ] },
-    perak: { full: false, list: [
-      { nm: 'Columbia Asia Hospital Taiping', plat: 1, ad: 'Taiping', ph: '05-820 8888' },
-      { nm: 'Taiping Medical Centre', ad: 'Taiping', ph: '05-807 1049' },
+    sarawak: { full: true, list: [
+      {"nm": "KPJ Miri Specialist Hospital", "ad": "Lot 8836, Block 11, KBLD, Off Tudan, Kuala Baram By Pass Rd, Bandar Baru Permyjaya, 98000 Miri", "ph": "085-649 999", "s": 1},
+      {"nm": "KPJ Sibu Specialist Medical Center", "ad": "No 52A-G, Persiaran Brooke, Pekan Sibu, 96000 Sibu", "ph": "084-329 900", "s": 1},
+      {"nm": "Kuching Specialist Hospital", "ad": "Lot 10420, Block 11 Tabuan Stutong Commercial Centre, Jalan Setia Raja, 93350 Kuching", "ph": "082-365 777", "s": 1},
+      {"nm": "Timberland Medical Centre", "ad": "Lot 5160-5169 & 7477-7486, Block 16, KCLD, 2 1/2 Mile, Jalan Rock, 93250 Kuching", "ph": "082-234 466", "s": 1},
+      {"nm": "Borneo Medical Centre (Kuching)", "ad": "Lot 10992, Section 64 KTLD, Jalan, Tun Jugah, 93350 Kuching", "ph": "082-507 333", "s": 0},
+      {"nm": "Kemena Pacific Hospital", "ad": "Lot 3582, Block 26, Jalan Tan Sri Ikhwan, Kemena Land District, Tanjung Kidurong, 97000 Bintulu", "ph": "086-251 888", "s": 0},
+      {"nm": "Normah Medical Specialist Centre", "ad": "Lot 937, Section 30 KTLD, Jalan Tun Abdul Rahman Yaakub, Petra Jaya, 93050 Kuching", "ph": "082-440 055", "s": 0},
+      {"nm": "Selesa Pacific Hospital", "ad": "Lot 1035-1039, Jalan Bulan Sabit, C.D.T 155, 98000 Miri", "ph": "085-437 755", "s": 0},
     ] },
   },
 };
@@ -705,7 +841,7 @@ function runRezeki(plan, basic, saver, saverYears, adhoc, rate) {
 /* ---------------- state ---------------- */
 const blankState = () => ({
   prod: 'idaman', lang: 'bm',
-  i: { family: '', persons: [{ name: '', rel: 'self', m: '' }], sum: '', term: '70', plan: '200', ded: 'none', state: 'penang', area: 'both' },
+  i: { family: '', persons: [{ name: '', rel: 'self', m: '' }], sum: '', term: '70', plan: '200', ded: 'none', state: 'penang', area: 'all', ptype: 'all', hosp: null },
   r: { name: '', age: '', use: 'retire', child: '', childAge: '', plan: '5Pay20', basic: '', saver: '', saverYears: '', adhoc: '',
        have: { gk: false, df: false, m1: false, m2: false }, deathMode: 'blank',
        death: [{ y: 2, v: '' }, { y: 5, v: '' }, { y: 10, v: '' }, { y: 19, v: '' }] },
@@ -713,6 +849,20 @@ const blankState = () => ({
 });
 let S = blankState();
 try { const a = JSON.parse(localStorage.getItem('ps_agent') || 'null'); if (a) Object.assign(S.a, a); } catch (e) {}
+
+/* ---------------- panel hospitals ---------------- */
+const MAX_HOSP = 11;
+const shortAd = ad => ad.split(',').map(x => x.trim()).filter(Boolean).slice(-2).join(', ');
+function hospPool(s) {
+  const d = DATA.hospitals[s.state]; if (!d) return [];
+  return d.list.filter(h => (s.area === 'all' || !h.a || h.a === s.area) && (s.ptype === 'all' || h.s));
+}
+function hospChosen(s) {
+  const pool = hospPool(s);
+  if (Array.isArray(s.hosp)) return pool.filter(h => s.hosp.includes(h.nm));
+  return pool.length <= MAX_HOSP ? pool : pool.filter(h => h.s).slice(0, MAX_HOSP - 1);
+}
+const areaName = (st, a) => { const r = (DATA.areas[st] || []).find(x => x[0] === a); return r ? t(r[1], r[2]) : ''; };
 
 /* ---------------- relationships (Idaman) ---------------- */
 const RELS = [['self', 'Diri sendiri', 'Self'], ['spouse', 'Pasangan', 'Spouse'], ['parent', 'Ibu bapa', 'Parent'], ['guardian', 'Penjaga sah', 'Legal guardian']];
@@ -783,20 +933,25 @@ function renderIdaman() {
   const stRow = DATA.states.find(x => x[0] === s.state) || DATA.states[0];
   const stName = t(stRow[1], stRow[2]);
   const stData = DATA.hospitals[s.state];
-  const hosp = stData ? stData.list.filter(h => s.state !== 'penang' || s.area === 'both' || h.a === s.area) : [];
+  const hosp = hospChosen(s).slice(0, MAX_HOSP);
+  const hasGen = hosp.some(h => !h.s);
   let hHtml = '', no = 0, lastA = '';
   for (const h of hosp) {
-    if (h.a && h.a !== lastA) { hHtml += `<div class="area">${h.a === 'island' ? t('Pulau', 'Island') : 'Seberang Perai'}</div>`; lastA = h.a; }
+    if (h.a && h.a !== lastA && s.area === 'all') { hHtml += `<div class="area">${areaName(s.state, h.a)}</div>`; lastA = h.a; }
     no++;
-    hHtml += `<div class="h${h.plat ? ' plat' : ''}"><div class="no">${no}</div><div><div class="nm">${esc(h.nm)}${h.plat ? '<span class="badge">Platinum</span>' : ''}</div><div class="ad">${h.ad ? esc(h.ad) + ' · ' : ''}<span class="ph">${h.ph}</span></div></div></div>`;
+    hHtml += `<div class="h${h.s ? ' plat' : ''}"><div class="no${h.s ? ' sm' : ' gp'}">${no}</div><div><div class="nm">${esc(h.nm)}</div><div class="ad">${h.ad ? esc(shortAd(h.ad)) + ' · ' : ''}<span class="ph">${h.ph}</span></div></div></div>`;
   }
   if (!hosp.length) {
     hHtml += `<div class="h" style="grid-column:1/-1;background:var(--cream);border-style:dashed;padding:3mm"><div class="no">🏥</div><div><div class="nm">${t(`Hospital panel SMART di ${stName}`, `SMART panel hospitals in ${stName}`)}</div><div class="ad" style="font-size:7.4pt;margin-top:.8mm">${t('Senarai terkini hospital, klinik GP dan pakar SMART berdekatan boleh disemak dalam app AIA+ (Panel Locator) atau aia.com.my. Ejen anda akan bantu pilih hospital panel yang paling dekat.', 'The latest SMART hospitals, GP clinics and specialists near you are in the AIA+ app (Panel Locator) or aia.com.my. Your agent will help you pick the nearest panel hospital.')}</div></div></div>`;
   }
-  hHtml += `<div class="h" style="background:var(--cream);border-style:dashed${hosp.length % 2 ? '' : ';grid-column:1/-1'}"><div class="no">★</div><div><div class="nm">${t('Platinum = lebih mudah', 'Platinum = more convenience')}</div><div class="ad">${t('Caj admin/kemasukan dikecualikan &amp; tiada deposit tunai semasa masuk wad (T&amp;S).', 'Admin/admission charges waived &amp; no cash deposit on admission (T&amp;C apply).')}</div></div></div>`;
+  const smartTxt = s.ded === 'smart'
+    ? t('SMART: tiada 20% co-takaful + Preferred Panel Bonus.', 'SMART: no 20% co-takaful + Preferred Panel Bonus.')
+    : t('SMART: layak Preferred Panel Bonus.', 'SMART: earns the Preferred Panel Bonus.');
+  const genTxt = hasGen ? t(' Panel umum: GL tanpa tunai untuk jabatan/pakar tertentu sahaja.', ' General: cashless GL for selected departments/specialists only.') : '';
+  hHtml += `<div class="h" style="background:var(--cream);border-style:dashed${hosp.length % 2 ? '' : ';grid-column:1/-1'}"><div class="no">★</div><div><div class="nm"><span class="dot sm"></span>SMART${hasGen ? ` &nbsp;<span class="dot gp"></span>${t('Panel umum', 'General panel')}` : ''}</div><div class="ad">${smartTxt}${genTxt}</div></div></div>`;
+  const partial = hosp.length < hospPool(s).length;
   const hospNote = !hosp.length ? t('Senarai panel boleh berubah — sentiasa sahkan dalam app AIA+ sebelum masuk wad.', 'Panel list may change — always confirm in the AIA+ app before admission.')
-    : stData.full ? t(`Sumber: AIA SMART Panel Provider Listing (dikemas kini ${DATA.asOf.panel}). Senarai panel boleh berubah — sentiasa sahkan dalam app AIA+ sebelum masuk wad.`, `Source: AIA SMART Panel Provider Listing (last updated ${DATA.asOf.panel}). Panel list may change — always confirm in the AIA+ app panel locator before admission.`)
-    : t(`Antara hospital panel SMART di ${stName} (bukan senarai penuh; ${DATA.asOf.panel}). Senarai penuh &amp; terkini dalam app AIA+.`, `Selected SMART panel hospitals in ${stName} (not the full list; ${DATA.asOf.panel}). Full, latest list in the AIA+ app.`);
+    : t(`Sumber: AIA Panel Hospital Listing, ${DATA.asOf.panel}. ${partial ? 'Pilihan hospital berdekatan; senarai penuh dalam app AIA+. ' : ''}Senarai boleh berubah — sahkan dalam app AIA+ sebelum masuk wad.`, `Source: AIA Panel Hospital Listing, ${DATA.asOf.panel}. ${partial ? 'Selected nearby hospitals; full list in the AIA+ app. ' : ''}List may change — confirm in the AIA+ app before admission.`);
 
   const ncb = P.ncb, bars = Array.from({ length: 10 }, (_, i) => `<div class="bar"><span>${kk(ncb * (i + 1))}</span><i style="height:${(i + 1) * 10}%"></i></div>`).join('');
   const names = persons.map(p => esc(p.name)).filter(Boolean);
@@ -909,7 +1064,7 @@ function renderIdaman() {
       <div class="mini" style="margin-top:2.5mm"><b style="color:var(--ink)">${t('Perlu tahu:', 'Good to know:')}</b> ${t("Tempoh bertenang 15 hari · tempoh ihsan 31 hari · perlindungan berterusan 5 tahun pertama jika caruman dibayar tepat masa · tempoh menunggu perubatan 30 hari (120 hari untuk penyakit tertentu; kecuali kecederaan) · penyakit sedia ada tidak dilindungi · kadar Tabarru' tidak dijamin dan meningkat ikut umur.", "15-day free-look · 31-day grace period · 5-year no-lapse if contributions paid on time · medical waiting period 30 days (120 days for specified illnesses; injuries exempt) · pre-existing conditions excluded · Tabarru' rates not guaranteed and increase with age.")}</div>
     </div>
     <div>
-      <div class="sec"><div class="n">5</div><h2>${t(`Hospital Panel SMART AIA · ${stName}`, `AIA SMART Panel Hospitals · ${stName}`)}</h2></div>
+      <div class="sec"><div class="n">5</div><h2>${t(`Hospital Panel AIA · ${stName}`, `AIA Panel Hospitals · ${stName}`)}${s.area !== 'all' && areaName(s.state, s.area) ? ' · ' + areaName(s.state, s.area) : ''}</h2></div>
       <div class="hgrid">${hHtml}</div>
       <div class="mini">${hospNote}</div>
     </div>
@@ -1148,9 +1303,8 @@ function warnings() {
     if (!ps.length) w.push('Masukkan sekurang-kurangnya seorang (nama + caruman bulanan).');
     ps.forEach(p => { if (!num(p.m)) w.push(`Caruman bulanan ${p.name || '?'} kosong.`); if (!p.name.trim()) w.push('Ada orang tanpa nama.'); });
     if (!num(s.sum)) w.push('Jumlah perlindungan Kematian/TPD kosong.');
-    const hs = DATA.hospitals[s.state];
-    if (!hs) w.push('Tiada senarai hospital untuk negeri ini lagi — proposal tunjuk nota "semak app AIA+".');
-    else if (!hs.full) w.push('Senarai hospital negeri ini belum penuh (ditanda "antara hospital panel").');
+    if (!DATA.hospitals[s.state]) w.push('Tiada hospital panel dalam senarai AIA untuk negeri ini — proposal tunjuk nota "semak app AIA+".');
+    else if (Array.isArray(s.hosp) && hospChosen(s).length > MAX_HOSP) w.push(`Hanya ${MAX_HOSP} hospital pertama dipaparkan (muat 1 muka surat). Kurangkan pilihan.`);
   } else {
     const { s, p, basic, saver, saverYears, age } = rezekiInputs();
     if (!s.name.trim()) w.push('Nama pelanggan kosong.');
@@ -1221,11 +1375,19 @@ function syncForm() {
   $('#formIdaman').classList.toggle('hide', S.prod !== 'idaman');
   $('#formRezeki').classList.toggle('hide', S.prod !== 'rezeki');
   $('#eduRow').classList.toggle('hide', S.r.use !== 'edu');
-  $('#areaRow').classList.toggle('hide', S.i.state !== 'penang');
+  buildHospUI();
   $('#deathInputs').classList.toggle('hide', S.r.deathMode !== 'values');
   $('#dfLabel').textContent = S.r.use === 'retire' ? 'KWSP / i-Saraan' : S.r.use === 'edu' ? 'SSPN' : 'KWSP';
   $('[data-k="r.saverYears"]').placeholder = 'ikut tempoh (' + PLANS[S.r.plan].term + ')';
   document.documentElement.lang = S.lang === 'bm' ? 'ms' : 'en';
+}
+function buildHospUI() {
+  const s = S.i, areas = DATA.areas[s.state];
+  $('#areaRow').classList.toggle('hide', !areas);
+  if (areas) $('#areaPick').innerHTML = [['all', 'Semua']].concat(areas.map(a => [a[0], a[1]])).map(([v, l]) => `<button data-v="${v}" class="${s.area === v ? 'on' : ''}">${l}</button>`).join('');
+  const pool = hospPool(s), chosen = new Set(hospChosen(s).map(h => h.nm));
+  $('#hospCount').textContent = DATA.hospitals[s.state] ? `${chosen.size} dipilih daripada ${pool.length}` : 'tiada senarai';
+  $('#hospList').innerHTML = pool.map(h => `<label class="chk"><input type="checkbox" data-hosp="${esc(h.nm)}"${chosen.has(h.nm) ? ' checked' : ''}><span>${esc(h.nm)} <small style="color:${h.s ? 'var(--red)' : 'var(--muted)'};font-weight:700">${h.s ? 'SMART' : 'umum'}</small></span></label>`).join('') || '<div class="hint">Tiada hospital untuk tapisan ini.</div>';
 }
 function buildPersons() {
   const box = $('#persons');
@@ -1250,18 +1412,21 @@ function init() {
   const panel = $('#panel');
   panel.addEventListener('input', e => {
     const el = e.target;
-    if (el.dataset.k) { setK(el.dataset.k, el.type === 'checkbox' ? el.checked : el.value); if (el.dataset.k.startsWith('a.')) saveAgent(); if (el.dataset.k === 'i.state') syncForm(); }
+    if (el.dataset.k) { setK(el.dataset.k, el.type === 'checkbox' ? el.checked : el.value); if (el.dataset.k.startsWith('a.')) saveAgent(); if (el.dataset.k === 'i.state') { S.i.area = 'all'; S.i.hosp = null; syncForm(); } }
     else if (el.dataset.pk) { const [i, k] = el.dataset.pk.split('.'); S.i.persons[+i][k] = el.value; }
     else if (el.dataset.dk) { const [i, k] = el.dataset.dk.split('.'); S.r.death[+i][k] = el.value; }
     else return;
     schedule();
   });
   $('#prodSel').addEventListener('change', e => { S.prod = e.target.value; syncForm(); render(); });
-  panel.addEventListener('change', e => { if (e.target.type === 'checkbox' && e.target.dataset.k) { setK(e.target.dataset.k, e.target.checked); schedule(); } });
+  panel.addEventListener('change', e => {
+    if (e.target.type === 'checkbox' && e.target.dataset.k) { setK(e.target.dataset.k, e.target.checked); schedule(); }
+    if (e.target.dataset.hosp !== undefined) { S.i.hosp = $$('#hospList [data-hosp]').filter(x => x.checked).map(x => x.dataset.hosp); buildHospUI(); schedule(); }
+  });
   panel.addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     const g = b.closest('[data-pick]');
-    if (g) { e.preventDefault(); setK(g.dataset.pick, b.dataset.v); syncForm(); render(); return; }
+    if (g) { e.preventDefault(); setK(g.dataset.pick, b.dataset.v); if (['i.area', 'i.ptype'].includes(g.dataset.pick)) S.i.hosp = null; syncForm(); render(); return; }
     if (b.dataset.del !== undefined) { S.i.persons.splice(+b.dataset.del, 1); buildPersons(); render(); return; }
     if (b.id === 'addPerson') { if (S.i.persons.length < 4) S.i.persons.push({ name: '', rel: 'spouse', m: '' }); buildPersons(); render(); return; }
     if (b.id === 'sampleBtn') { loadSample(); return; }
@@ -1279,8 +1444,8 @@ function init() {
   window.addEventListener('resize', () => { clearTimeout(window._rz); window._rz = setTimeout(fitPreview, 100); });
   window.addEventListener('beforeprint', () => { $('#doc').style.zoom = 1; });
   window.addEventListener('afterprint', fitPreview);
-  $('#asof').innerHTML = `<b>Data dalam app ini</b><br>ADSE fact sheet: ${DATA.asOf.adse} · Look-through: ${DATA.asOf.lookthrough}<br>Panel SMART: P. Pinang penuh, Kedah/Perak separa (${DATA.asOf.panel}) · Manfaat produk: ${DATA.asOf.products} · Kontrak Idaman: ${DATA.asOf.idamanContract}<br>Kematian/TPD Rezeki: manual (formula belum disahkan).`;
-  $('#stateSel').innerHTML = DATA.states.map(([k, bm]) => { const d = DATA.hospitals[k]; return `<option value="${k}">${bm}${!d ? ' · tiada senarai' : d.full ? '' : ' · separa'}</option>`; }).join('');
+  $('#asof').innerHTML = `<b>Data dalam app ini</b><br>ADSE fact sheet: ${DATA.asOf.adse} · Look-through: ${DATA.asOf.lookthrough}<br>Panel hospital AIA: semua negeri (berkuat kuasa ${DATA.asOf.panel}) · Manfaat produk: ${DATA.asOf.products} · Kontrak Idaman: ${DATA.asOf.idamanContract}<br>Kematian/TPD Rezeki: manual (formula belum disahkan).`;
+  $('#stateSel').innerHTML = DATA.states.map(([k, bm]) => { const d = DATA.hospitals[k]; return `<option value="${k}">${bm}${!d ? ' · tiada senarai' : ''}</option>`; }).join('');
   buildPersons(); buildDeath(); syncForm(); render();
 }
 
@@ -1301,7 +1466,7 @@ function doPrint() {
 
 function loadSample() {
   if (S.prod === 'idaman') {
-    Object.assign(S.i, { family: 'Khairil', persons: [{ name: 'Khairil', rel: 'self', m: '166' }, { name: 'Isteri', rel: 'spouse', m: '176' }], sum: '6000', term: '70', plan: '200', ded: 'none', state: 'penang', area: 'both' });
+    Object.assign(S.i, { family: 'Khairil', persons: [{ name: 'Khairil', rel: 'self', m: '166' }, { name: 'Isteri', rel: 'spouse', m: '176' }], sum: '6000', term: '70', plan: '200', ded: 'none', state: 'penang', area: 'all', ptype: 'all', hosp: null });
     buildPersons();
   } else {
     Object.assign(S.r, { name: 'Eddy', age: '40', use: 'retire', child: '', childAge: '', plan: '5Pay20', basic: '20000', saver: '10000', saverYears: '', adhoc: '', have: { gk: true, df: true, m1: false, m2: false }, deathMode: 'blank' });

@@ -82,6 +82,10 @@ main{overflow:auto;-webkit-overflow-scrolling:touch;padding:20px;min-width:0}
 .panel details[open].card summary{margin-bottom:10px}
 .panel .hide{display:none!important}
 
+.panel .hospbox{margin-top:10px;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.panel .hospbox summary{font-weight:700;font-size:13.5px;cursor:pointer}
+.panel .hosplist{display:grid;gap:6px;margin-top:8px;max-height:320px;overflow:auto}
+.panel .hosplist .chk{min-height:40px;font-size:13px}
 /* preview */
 .toolbar{display:flex;align-items:center;gap:10px;margin:0 auto 14px;max-width:820px}
 .toolbar .status{font-size:13px;color:var(--muted)}
@@ -134,6 +138,8 @@ main{overflow:auto;-webkit-overflow-scrolling:touch;padding:20px;min-width:0}
 .tC .dc .v.blank{color:#C9BFC3;font-weight:500;letter-spacing:.04em}
 .tC .dc.hi .v.blank{color:#FFD7DD}
 .tA .lb .t,.tC .pos .tl{overflow-wrap:anywhere}
+.tA .h .no.sm{background:var(--red);color:#fff}.tA .h .no.gp{background:#E3E0E2;color:#5A5560}
+.tA .dot{display:inline-block;width:2.4mm;height:2.4mm;border-radius:50%;margin-right:1mm;vertical-align:-.2mm}.tA .dot.sm{background:var(--red)}.tA .dot.gp{background:#BDB7BB}
 .tC .dc .v.blank{white-space:nowrap}
 /* auto-fit levels (added when a page overflows) */
 .tC.nodeath .page:first-of-type .sec{margin:6mm 0 3mm}.tC.nodeath .page:first-of-type .snap{padding-top:6mm!important}.tC.nodeath .tagline{margin-bottom:3mm}.tC.nodeath .lineup{margin-top:3mm}.tC.nodeath .sc{padding:3.6mm 3.6mm}.tC.nodeath .sc .tv{font-size:18pt}
@@ -209,8 +215,10 @@ main{overflow:auto;-webkit-overflow-scrolling:touch;padding:20px;min-width:0}
           <h3><span class="n">3</span>A-Plus Health360-i</h3>
           <label class="f"><span>Pelan</span><div class="pick" data-pick="i.plan"><button data-v="200">Plan 200</button><button data-v="300">Plan 300</button></div></label>
           <label class="f"><span>Pilihan deductible</span><div class="pick" data-pick="i.ded"><button data-v="none">Tiada</button><button data-v="d500">RM500</button><button data-v="smart">RM500 + SMART</button></div></label>
-          <label class="f"><span>Negeri · senarai hospital SMART</span><select id="stateSel" data-k="i.state"></select></label>
-          <label class="f" id="areaRow"><span>Kawasan (Pulau Pinang)</span><div class="pick" data-pick="i.area"><button data-v="both">Pulau + SP</button><button data-v="island">Pulau</button><button data-v="mainland">Seberang Perai</button></div></label>
+          <label class="f"><span>Negeri · hospital panel</span><select id="stateSel" data-k="i.state"></select></label>
+          <label class="f" id="areaRow"><span>Kawasan</span><div class="pick" data-pick="i.area" id="areaPick"></div></label>
+          <label class="f"><span>Jenis panel</span><div class="pick" data-pick="i.ptype"><button data-v="all">SMART + panel umum</button><button data-v="smart">SMART sahaja</button></div></label>
+          <details class="hospbox"><summary>🏥 Pilih hospital untuk proposal · <span id="hospCount"></span></summary><div id="hospList" class="hosplist"></div><div class="hint">Max 11 hospital muat dalam proposal. Tukar negeri/kawasan/jenis = pilihan ditetapkan semula.</div></details>
         </div>
       </div>
 

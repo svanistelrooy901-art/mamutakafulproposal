@@ -82,7 +82,7 @@ function runRezeki(plan, basic, saver, saverYears, adhoc, rate) {
 /* ---------------- state ---------------- */
 const blankState = () => ({
   prod: 'idaman', lang: 'bm',
-  i: { family: '', persons: [{ name: '', rel: '', m: '' }], sum: '', term: '70', plan: '200', ded: 'none', area: 'both' },
+  i: { family: '', persons: [{ name: '', rel: 'self', m: '' }], sum: '', term: '70', plan: '200', ded: 'none', area: 'both' },
   r: { name: '', age: '', use: 'retire', child: '', childAge: '', plan: '5Pay20', basic: '', saver: '', saverYears: '', adhoc: '',
        have: { gk: false, df: false, m1: false, m2: false }, deathMode: 'blank',
        death: [{ y: 2, v: '' }, { y: 5, v: '' }, { y: 10, v: '' }, { y: 19, v: '' }] },
@@ -90,6 +90,10 @@ const blankState = () => ({
 });
 let S = blankState();
 try { const a = JSON.parse(localStorage.getItem('ps_agent') || 'null'); if (a) Object.assign(S.a, a); } catch (e) {}
+
+/* ---------------- relationships (Idaman) ---------------- */
+const RELS = [['self', 'Diri sendiri', 'Self'], ['spouse', 'Pasangan', 'Spouse'], ['parent', 'Ibu bapa', 'Parent'], ['guardian', 'Penjaga sah', 'Legal guardian']];
+const relLabel = code => { const r = RELS.find(x => x[0] === code); return !r || code === 'self' ? '' : (S.lang === 'bm' ? r[1] : r[2]); };
 
 /* ---------------- helpers ---------------- */
 const $ = s => document.querySelector(s);
@@ -128,7 +132,7 @@ function renderIdaman() {
   const h1a = n === 1 ? t('Satu pelan. Hati tenang.', 'One plan. Peace of mind.') : t(`Satu pelan. ${words[n - 1][0]} hati.`, `One plan. ${words[n - 1][1]} hearts.`);
   const h1b = n === 1 && !s.family.trim() ? t(`Perlindungan 360° untuk ${fam}.`, `360° protection for ${fam}.`) : t(`Perlindungan 360° untuk keluarga ${fam}.`, `360° protection for ${fam}'s family.`);
   const avc = ['var(--red)', '#E77B8C', '#9E0B24', '#F2A6B2'];
-  const plist = (persons.length ? persons : [{ name: '—', rel: '', m: '' }]).map((p, i) => `<div class="person"><div class="pn"><div class="av" style="background:${avc[i % 4]}">${esc((p.name.trim()[0] || '?').toUpperCase())}</div>${esc(p.name)}${p.rel ? ` <span style="font-weight:500;color:var(--muted);font-size:8pt">&nbsp;· ${esc(p.rel)}</span>` : ''}</div><div class="pp">${RM(num(p.m))}<small>${t('/bln', '/mth')}</small></div></div>`).join('');
+  const plist = (persons.length ? persons : [{ name: '—', rel: '', m: '' }]).map((p, i) => `<div class="person"><div class="pn"><div class="av" style="background:${avc[i % 4]}">${esc((p.name.trim()[0] || '?').toUpperCase())}</div>${esc(p.name)}${relLabel(p.rel) ? ` <span style="font-weight:500;color:var(--muted);font-size:8pt">&nbsp;· ${relLabel(p.rel)}</span>` : ''}</div><div class="pp">${RM(num(p.m))}<small>${t('/bln', '/mth')}</small></div></div>`).join('');
   const daily = total * 12 / 365;
   const dedNote = {
     none: t('Perlindungan seluruh dunia (luar negara >90 hari berturut tidak dilindungi, kecuali Singapura &amp; Brunei).', 'Worldwide cover (overseas &gt;90 consecutive days excluded, except Singapore &amp; Brunei).'),
@@ -573,7 +577,8 @@ function syncForm() {
     if (el.type === 'checkbox') el.checked = !!v; else if (document.activeElement !== el) el.value = v ?? '';
   });
   $$('#panel [data-pick]').forEach(g => { const v = String(getK(g.dataset.pick)); g.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === v)); });
-  $$('#prodPick button').forEach(b => b.classList.toggle('on', b.dataset.prod === S.prod));
+  $('#prodSel').value = S.prod;
+  $('#prodDesc').textContent = S.prod === 'idaman' ? 'Takaful keluarga + kad perubatan · 2 muka surat' : 'Simpanan + pelaburan 20 tahun · 2 muka surat';
   $$('#langSeg button').forEach(b => b.classList.toggle('on', b.dataset.lang === S.lang));
   $('#formIdaman').classList.toggle('hide', S.prod !== 'idaman');
   $('#formRezeki').classList.toggle('hide', S.prod !== 'rezeki');
@@ -586,8 +591,8 @@ function syncForm() {
 function buildPersons() {
   const box = $('#persons');
   box.innerHTML = S.i.persons.map((p, i) => `<div class="person">
-    <label class="f"><span>Nama</span><input data-pk="${i}.name" value="${esc(p.name)}" placeholder="${i ? 'Isteri' : 'Khairil'}"></label>
-    <label class="f"><span>Hubungan</span><input data-pk="${i}.rel" value="${esc(p.rel)}" placeholder="${i ? 'Isteri' : '—'}"></label>
+    <label class="f"><span>Nama</span><input data-pk="${i}.name" value="${esc(p.name)}" placeholder="${i ? 'Nama' : 'Khairil'}"></label>
+    <label class="f"><span>Hubungan</span><select data-pk="${i}.rel">${RELS.map(r => `<option value="${r[0]}"${p.rel === r[0] ? ' selected' : ''}>${r[1]}</option>`).join('')}</select></label>
     <label class="f"><span>RM / bulan</span><input data-pk="${i}.m" value="${esc(p.m)}" inputmode="decimal" placeholder="166"></label>
     <button class="x" data-del="${i}" aria-label="Buang" ${S.i.persons.length < 2 ? 'disabled style="opacity:.3"' : ''}>×</button></div>`).join('');
   $('#addPerson').disabled = S.i.persons.length >= 4;
@@ -612,14 +617,14 @@ function init() {
     else return;
     schedule();
   });
+  $('#prodSel').addEventListener('change', e => { S.prod = e.target.value; syncForm(); render(); });
   panel.addEventListener('change', e => { if (e.target.type === 'checkbox' && e.target.dataset.k) { setK(e.target.dataset.k, e.target.checked); schedule(); } });
   panel.addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     const g = b.closest('[data-pick]');
     if (g) { e.preventDefault(); setK(g.dataset.pick, b.dataset.v); syncForm(); render(); return; }
-    if (b.dataset.prod) { S.prod = b.dataset.prod; syncForm(); render(); return; }
     if (b.dataset.del !== undefined) { S.i.persons.splice(+b.dataset.del, 1); buildPersons(); render(); return; }
-    if (b.id === 'addPerson') { if (S.i.persons.length < 4) S.i.persons.push({ name: '', rel: '', m: '' }); buildPersons(); render(); return; }
+    if (b.id === 'addPerson') { if (S.i.persons.length < 4) S.i.persons.push({ name: '', rel: 'spouse', m: '' }); buildPersons(); render(); return; }
     if (b.id === 'sampleBtn') { loadSample(); return; }
     if (b.id === 'clearBtn') { const a = S.a, l = S.lang, p = S.prod; S = blankState(); S.a = a; S.lang = l; S.prod = p; buildPersons(); buildDeath(); syncForm(); render(); toast('Borang dikosongkan.', 2000); return; }
   });
@@ -655,7 +660,7 @@ function doPrint() {
 
 function loadSample() {
   if (S.prod === 'idaman') {
-    Object.assign(S.i, { family: 'Khairil', persons: [{ name: 'Khairil', rel: '', m: '166' }, { name: 'Isteri', rel: 'Wife', m: '176' }], sum: '6000', term: '70', plan: '200', ded: 'none', area: 'both' });
+    Object.assign(S.i, { family: 'Khairil', persons: [{ name: 'Khairil', rel: 'self', m: '166' }, { name: 'Isteri', rel: 'spouse', m: '176' }], sum: '6000', term: '70', plan: '200', ded: 'none', area: 'both' });
     buildPersons();
   } else {
     Object.assign(S.r, { name: 'Eddy', age: '40', use: 'retire', child: '', childAge: '', plan: '5Pay20', basic: '20000', saver: '10000', saverYears: '', adhoc: '', have: { gk: true, df: true, m1: false, m2: false }, deathMode: 'blank' });

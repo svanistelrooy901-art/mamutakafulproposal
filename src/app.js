@@ -562,11 +562,15 @@ function checkLayout() {
   else { box.className = 'warnbox show okbox'; box.innerHTML = '<b>✓ Sedia untuk PDF.</b> Semak angka caruman dengan SQS sekali lagi.'; }
   $('#status').textContent = (S.prod === 'idaman' ? 'A-Life Idaman + Health360-i' : 'A-Enrich Rezeki') + ' · ' + (S.lang === 'bm' ? 'Bahasa Melayu' : 'English') + ' · 2 muka surat A4';
 }
+let zoomBig = false;
 function fitPreview() {
   const main = $('#main'), doc = $('#doc');
   const avail = main.clientWidth - (window.innerWidth <= 980 ? 24 : 40);
-  const z = Math.min(1.25, Math.max(0.3, avail / 793.7));
+  const fit = Math.min(1.25, Math.max(0.3, avail / 793.7));
+  const z = zoomBig && fit < 0.85 ? 0.85 : fit;
   doc.style.zoom = z;
+  main.style.overflowX = z > fit ? 'auto' : '';
+  const zb = $('#zoomBtn'); if (zb) zb.textContent = zoomBig ? '↔ Muat skrin' : '🔍 Besarkan';
 }
 
 /* ---------------- form binding ---------------- */
@@ -635,6 +639,7 @@ function init() {
     fitPreview();
   });
   $('#printBtn').addEventListener('click', doPrint);
+  $('#zoomBtn').addEventListener('click', () => { zoomBig = !zoomBig; fitPreview(); });
   window.addEventListener('resize', () => { clearTimeout(window._rz); window._rz = setTimeout(fitPreview, 100); });
   window.addEventListener('beforeprint', () => { $('#doc').style.zoom = 1; });
   window.addEventListener('afterprint', fitPreview);

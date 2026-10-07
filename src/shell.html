@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#C8102E">
+<title>Proposal Studio · Mamu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+@page{size:A4;margin:0}
+:root{--red:#C8102E;--deep:#9E0B24;--ink:#1E1B22;--muted:#6B6570;--line:#E7E1E3;--bg:#F3EFF0;--panel:#fff;--teal:#0E8A7E;--rose:#FCE8EC;--cream:#FFF6F3}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+.app{display:grid;grid-template-rows:auto 1fr;height:100vh;height:100dvh}
+
+/* top bar */
+.topbar{display:flex;align-items:center;gap:12px;padding:10px 16px;padding-top:max(10px,env(safe-area-inset-top));background:linear-gradient(120deg,#7E0A1F,var(--red) 60%,#E4364F);color:#fff}
+.brand{font-family:Poppins;font-weight:700;font-size:17px;line-height:1.1;white-space:nowrap}
+.brand small{display:block;font-family:Inter;font-weight:500;font-size:11px;opacity:.8}
+.topbar .sp{flex:1}
+.seg{display:inline-flex;background:rgba(0,0,0,.18);border-radius:999px;padding:3px}
+.seg button{border:0;background:transparent;color:#fff;padding:8px 14px;border-radius:999px;font-weight:700;font-size:14px;min-height:38px;cursor:pointer}
+.seg button.on{background:#fff;color:var(--red)}
+.btn{border:0;border-radius:12px;padding:10px 16px;min-height:44px;font-weight:700;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.btn.white{background:#fff;color:var(--red)}
+.btn.ghost{background:rgba(255,255,255,.16);color:#fff}
+.btn.soft{background:var(--rose);color:var(--red)}
+.btn.line{background:#fff;border:1px solid var(--line);color:var(--ink)}
+
+/* layout */
+.body{display:grid;grid-template-columns:420px 1fr;min-height:0}
+.panel{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px 40px}
+main{overflow:auto;-webkit-overflow-scrolling:touch;padding:20px;min-width:0}
+.tabs{display:none}
+
+/* form */
+.panel .prod{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px}
+.panel .prod button{border:2px solid var(--line);background:#fff;border-radius:14px;padding:12px;text-align:left;cursor:pointer;min-height:72px}
+.panel .prod button b{display:block;font-family:Poppins;font-size:14px;line-height:1.2}
+.panel .prod button span{display:block;font-size:12px;color:var(--muted);margin-top:3px}
+.panel .prod button.on{border-color:var(--red);background:var(--cream)}
+.panel .prod button.on b{color:var(--red)}
+.panel .card{border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:12px}
+.panel .card h3{margin:0 0 10px;font-family:Poppins;font-size:14px;display:flex;align-items:center;gap:8px}
+.panel .card h3 .n{width:22px;height:22px;border-radius:7px;background:var(--red);color:#fff;font-size:12px;display:grid;place-items:center}
+.panel .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.panel .row3{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:8px}
+.panel label.f{display:block;margin-top:10px}
+.panel label.f:first-child{margin-top:0}
+.panel .row label.f,.panel .row3 label.f{margin-top:0}
+.panel .row+.row,.panel .row+label.f,.panel label.f+.row{margin-top:10px}
+.panel label.f>span{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px}
+.panel input[type=text],.panel input[type=number],.panel input:not([type]),.panel select{width:100%;min-height:46px;border:1px solid #D9D1D4;border-radius:10px;padding:10px 12px;background:#fff;font-size:16px}
+.panel input:focus,.panel select:focus{outline:2px solid rgba(200,16,46,.35);border-color:var(--red)}
+.panel .pick{display:flex;flex-wrap:wrap;gap:6px}
+.panel .pick button{border:1px solid #D9D1D4;background:#fff;border-radius:10px;padding:9px 12px;min-height:44px;font-weight:600;font-size:14px;cursor:pointer;flex:1 1 auto}
+.panel .pick button.on{background:var(--red);border-color:var(--red);color:#fff}
+.panel .chk{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;min-height:46px;cursor:pointer;font-size:14px}
+.panel .chk input{width:22px;height:22px;accent-color:var(--teal)}
+.panel .chks{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.panel .hint{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.4}
+.panel .person{display:grid;grid-template-columns:1.3fr 1fr .9fr 40px;gap:6px;align-items:end;margin-top:8px}
+.panel .person:first-child{margin-top:0}
+.panel .x{width:40px;height:46px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:20px;color:var(--muted);cursor:pointer}
+.panel .death{display:grid;grid-template-columns:70px 1fr;gap:6px;margin-top:6px}
+.panel .warnbox{margin-top:12px;border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.45;background:#FFF8F0;border:1px solid #F3DCC0;display:none}
+.panel .warnbox.show{display:block}
+.panel .warnbox b{color:#A15C00}
+.panel .okbox{background:#E6F5F3;border-color:#BFE3DE}
+.panel .okbox b{color:var(--teal)}
+.panel .asof{font-size:11.5px;color:var(--muted);margin-top:14px;line-height:1.5;border-top:1px dashed var(--line);padding-top:10px}
+.panel .foot-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.panel details.card summary{font-family:Poppins;font-weight:600;font-size:14px;cursor:pointer;list-style:none}
+.panel details.card summary::-webkit-details-marker{display:none}
+.panel details.card summary:after{content:"▾";float:right;color:var(--muted)}
+.panel details[open].card summary{margin-bottom:10px}
+.panel .hide{display:none!important}
+
+/* preview */
+.toolbar{display:flex;align-items:center;gap:10px;margin:0 auto 14px;max-width:820px}
+.toolbar .status{font-size:13px;color:var(--muted)}
+#doc{margin:0 auto;width:210mm}
+#doc .page{margin:0 0 18px;box-shadow:0 6px 24px rgba(40,10,20,.12);border-radius:2px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 16px;border-radius:12px;font-size:13.5px;line-height:1.45;max-width:min(560px,92vw);box-shadow:0 8px 30px rgba(0,0,0,.25);display:none;z-index:50}
+.toast.show{display:block}
+
+/* tablet portrait / phone */
+@media (max-width:980px){
+  .body{grid-template-columns:1fr}
+  .tabs{display:flex;gap:6px;padding:8px 12px;background:#fff;border-bottom:1px solid var(--line)}
+  .tabs button{flex:1;min-height:44px;border-radius:10px;border:1px solid var(--line);background:#fff;font-weight:700;cursor:pointer}
+  .tabs button.on{background:var(--red);color:#fff;border-color:var(--red)}
+  .app{grid-template-rows:auto auto 1fr}
+  .body.show-form main{display:none}
+  .body.show-prev .panel{display:none}
+  .panel{border-right:0}
+  main{padding:12px}
+}
+@media (max-width:560px){.brand small{display:none}.btn.ghost .lbl{display:none}}
+
+/* lang-specific template tweaks */
+.tC.lang-bm .page:last-of-type .box{padding:2.4mm 3mm}
+.tC.lang-bm .page:last-of-type .box li{font-size:7pt;margin:.35mm 0}
+.tC .ck i.on{background:var(--teal);border-color:var(--teal);position:relative}
+.tC .ck i.on:after{content:"✓";position:absolute;inset:-1.2mm 0 0 .3mm;color:#fff;font-size:7pt;font-weight:800}
+.tC .pos.fw .ck i{border-color:#fff}
+.tC .dc .v.blank{color:#C9BFC3;font-weight:500;letter-spacing:.04em}
+.tC .dc.hi .v.blank{color:#FFD7DD}
+.tA .lb .t,.tC .pos .tl{overflow-wrap:anywhere}
+.tC .dc .v.blank{white-space:nowrap}
+/* auto-fit levels (added when a page overflows) */
+.tC.nodeath .page:first-of-type .sec{margin:6mm 0 3mm}.tC.nodeath .page:first-of-type .snap{padding-top:6mm!important}.tC.nodeath .tagline{margin-bottom:3mm}.tC.nodeath .lineup{margin-top:3mm}.tC.nodeath .sc{padding:3.6mm 3.6mm}.tC.nodeath .sc .tv{font-size:18pt}
+.tA .people.many .person{padding:.8mm 0}.tA .people.many .pp{font-size:11pt}.tA .people.many .av{width:6.5mm;height:6.5mm;font-size:8pt;margin-right:2mm}.tA .people.many .pn{font-size:8.6pt}.tA .people.many .total{margin-top:1.2mm;padding:1.4mm 2.6mm}
+.tA.tight1 .split{grid-template-columns:1.12fr 1.4fr}.tA.tight1 .vt td{padding:1.25mm 1.8mm}.tA.tight1 .vt th{padding:1.4mm 1.8mm}.tA.tight1 .p2head{padding-top:5mm}.tA.tight1 .wallet{margin-top:3mm;padding:3.2mm 4mm}.tA.tight1 .use .u{padding:2mm 2.3mm}
+.tA.tight2 .hero h1{font-size:18pt}.tA.tight2 .chart .cap{margin-top:1.2mm}.tA.tight2 .cta{padding:2.2mm 3.5mm}.tA.tight2 .mini{line-height:1.28}
+.tA.tight3 .cta{display:none}.tA.tight3 .hero h1{font-size:16.5pt}.tA.tight3 ul.ticks li{font-size:7.4pt;margin:.4mm 0}
+
+.tA.tight1 .page:first-of-type .sec{margin:3.8mm 0 2.2mm}.tA.tight1 .page:first-of-type .journey{margin-top:3mm}.tA.tight1 .page:first-of-type .lb{padding:2.4mm 2.6mm}.tA.tight1 .page:first-of-type .snap{padding-top:4mm}.tA.tight1 .page .sec{margin-top:3.2mm}
+.tA.tight2 ul.ticks li{margin:.55mm 0;font-size:7.7pt}.tA.tight2 .hero{padding:6mm 12mm 4.5mm}.tA.tight2 .person{padding:1.1mm 0}.tA.tight2 .lb .d{font-size:7pt}
+.tA.tight3 .hero p{font-size:8.8pt}.tA.tight3 .hl .row{margin-top:1.6mm}.tA.tight3 .jstep{padding:1.6mm 2.6mm}.tA.tight3 .h{padding:1.1mm 1.8mm}
+.tC.tight1 .page .sec{margin:2.6mm 0 1.5mm}.tC.tight1 .snap{padding-top:2.6mm!important}.tC.tight1 .box li{margin:.3mm 0}
+.tC.tight2 .pos .jb{font-size:6.6pt}.tC.tight2 .lineup{margin-top:1.4mm}.tC.tight2 .tagline{margin-bottom:1.4mm}.tC.tight2 .page:last-of-type .bars{height:20mm}
+.tC.tight3 .pos .to{display:none}.tC.tight3 .chartwrap{margin-top:1.6mm!important}
+
+
+/* print: only the proposal pages */
+@media print{
+  html,body{background:#fff!important;height:auto}
+  .topbar,.panel,.tabs,.toolbar,.toast{display:none!important}
+  .app,.body{display:block!important;height:auto!important}
+  main{display:block!important;padding:0!important;overflow:visible!important}
+  #doc{zoom:1!important;width:210mm;margin:0}
+  #doc .page{margin:0!important;box-shadow:none!important;border-radius:0;break-after:page;page-break-after:always}
+  #doc .page:last-child{break-after:auto;page-break-after:auto}
+}
+
+/* ===== proposal templates (scoped at build) ===== */
+/*@@TPL_CSS@@*/
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">Proposal Studio<small>Mamu · AIA PUBLIC Takaful</small></div>
+    <div class="sp"></div>
+    <div class="seg" id="langSeg"><button data-lang="bm" class="on">BM</button><button data-lang="en">EN</button></div>
+    <button class="btn white" id="printBtn">⬇︎ <span class="lbl">PDF / Print</span></button>
+  </header>
+  <nav class="tabs" id="tabs"><button data-tab="form" class="on">✏️ Borang</button><button data-tab="prev">📄 Pratonton</button></nav>
+
+  <div class="body show-form" id="body">
+    <aside class="panel" id="panel">
+      <div class="prod" id="prodPick">
+        <button data-prod="idaman" class="on"><b>A-Life Idaman + Health360-i</b><span>Takaful keluarga + kad perubatan</span></button>
+        <button data-prod="rezeki"><b>A-Enrich Rezeki</b><span>Simpanan + pelaburan 20 thn</span></button>
+      </div>
+
+      <!-- ========== IDAMAN FORM ========== -->
+      <div id="formIdaman">
+        <div class="card">
+          <h3><span class="n">1</span>Pelanggan</h3>
+          <label class="f"><span>Nama keluarga untuk tajuk (cth. Khairil)</span><input data-k="i.family" placeholder="Khairil"></label>
+          <label class="f"><span>Orang dilindungi · caruman bulanan dari SQS (RM)</span></label>
+          <div id="persons"></div>
+          <div class="foot-actions"><button class="btn soft" id="addPerson">+ Tambah orang</button></div>
+          <div class="hint">Max 4 orang. "Hubungan" pilihan, cth. Isteri / Wife, Anak.</div>
+        </div>
+        <div class="card">
+          <h3><span class="n">2</span>A-Life Idaman</h3>
+          <div class="row">
+            <label class="f"><span>Kematian / TPD (RM, setiap orang)</span><input data-k="i.sum" inputmode="numeric" placeholder="6000"></label>
+            <label class="f"><span>Tempoh perlindungan</span><div class="pick" data-pick="i.term"><button data-v="70">Umur 70</button><button data-v="80">Umur 80</button></div></label>
+          </div>
+        </div>
+        <div class="card">
+          <h3><span class="n">3</span>A-Plus Health360-i</h3>
+          <label class="f"><span>Pelan</span><div class="pick" data-pick="i.plan"><button data-v="200">Plan 200</button><button data-v="300">Plan 300</button></div></label>
+          <label class="f"><span>Pilihan deductible</span><div class="pick" data-pick="i.ded"><button data-v="none">Tiada</button><button data-v="d500">RM500</button><button data-v="smart">RM500 + SMART</button></div></label>
+          <label class="f"><span>Senarai hospital SMART (Pulau Pinang)</span><div class="pick" data-pick="i.area"><button data-v="both">Pulau + SP</button><button data-v="island">Pulau</button><button data-v="mainland">Seberang Perai</button></div></label>
+        </div>
+      </div>
+
+      <!-- ========== REZEKI FORM ========== -->
+      <div id="formRezeki" class="hide">
+        <div class="card">
+          <h3><span class="n">1</span>Pelanggan</h3>
+          <div class="row">
+            <label class="f"><span>Nama</span><input data-k="r.name" placeholder="Eddy"></label>
+            <label class="f"><span>Umur (orang dilindungi)</span><input data-k="r.age" inputmode="numeric" placeholder="40"></label>
+          </div>
+          <label class="f"><span>Kegunaan</span><div class="pick" data-pick="r.use"><button data-v="retire">Persaraan usahawan</button><button data-v="edu">Pendidikan anak</button><button data-v="save">Simpanan umum</button></div></label>
+          <div class="row" id="eduRow"><label class="f"><span>Nama anak</span><input data-k="r.child" placeholder="Aisyah"></label><label class="f"><span>Umur anak</span><input data-k="r.childAge" inputmode="numeric" placeholder="1"></label></div>
+        </div>
+        <div class="card">
+          <h3><span class="n">2</span>Pelan & caruman (dari SQS)</h3>
+          <label class="f"><span>Pelan</span><div class="pick" data-pick="r.plan"><button data-v="5Pay20">5Pay20</button><button data-v="10Pay20">10Pay20</button></div></label>
+          <div class="row">
+            <label class="f"><span>Caruman asas / tahun (RM)</span><input data-k="r.basic" inputmode="numeric" placeholder="20000"></label>
+            <label class="f"><span>Saver-i / tahun (RM)</span><input data-k="r.saver" inputmode="numeric" placeholder="0"></label>
+          </div>
+          <div class="row">
+            <label class="f"><span>Saver-i berapa tahun</span><input data-k="r.saverYears" inputmode="numeric" placeholder="ikut tempoh"></label>
+            <label class="f"><span>Ad hoc top-up tahun 1 (RM)</span><input data-k="r.adhoc" inputmode="numeric" placeholder="0"></label>
+          </div>
+          <div class="hint">Unjuran 5% / 8% / 10% dikira automatik (model kalkulator kita). Angka muktamad ikut PI.</div>
+        </div>
+        <div class="card">
+          <h3><span class="n">3</span>Pasukan kewangan · dah ada?</h3>
+          <div class="chks">
+            <label class="chk"><input type="checkbox" data-k="r.have.gk">Dana kecemasan / takaful</label>
+            <label class="chk"><input type="checkbox" data-k="r.have.df"><span id="dfLabel">KWSP / i-Saraan</span></label>
+            <label class="chk"><input type="checkbox" data-k="r.have.m1">ASB / ASNB</label>
+            <label class="chk"><input type="checkbox" data-k="r.have.m2">Emas</label>
+          </div>
+          <div class="hint">Yang ditanda keluar ✓ dalam proposal. Yang tak ditanda tinggal kotak kosong (boleh tanda dengan pen).</div>
+        </div>
+        <div class="card">
+          <h3><span class="n">4</span>Seksyen 3 · Kematian / TPD</h3>
+          <div class="pick" data-pick="r.deathMode"><button data-v="blank">Kosong (isi pen)</button><button data-v="values">Isi dari PI</button><button data-v="hide">Sembunyi</button></div>
+          <div id="deathInputs" class="hide" style="margin-top:8px">
+            <div class="hint" style="margin-top:0">Tahun sijil · nilai kematian/TPD dari PI (RM)</div>
+            <div id="deathRows"></div>
+          </div>
+        </div>
+      </div>
+
+      <details class="card" id="agentCard">
+        <summary>⚙️ Tetapan agen</summary>
+        <label class="f"><span>Nama</span><input data-k="a.name" placeholder="Mamu"></label>
+        <label class="f"><span>Jawatan</span><input data-k="a.title"></label>
+        <label class="f"><span>No. telefon (pilihan)</span><input data-k="a.phone" inputmode="tel" placeholder="01x-xxx xxxx"></label>
+        <div class="hint">Hanya tetapan agen disimpan dalam peranti ini. Data pelanggan tak disimpan langsung; refresh = kosong.</div>
+      </details>
+
+      <div class="warnbox" id="warn"></div>
+
+      <div class="foot-actions">
+        <button class="btn line" id="sampleBtn">Isi contoh</button>
+        <button class="btn line" id="clearBtn">Kosongkan</button>
+      </div>
+      <div class="asof" id="asof"></div>
+    </aside>
+
+    <main id="main">
+      <div class="toolbar"><span class="status" id="status"></span></div>
+      <div id="doc"></div>
+    </main>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+/*@@APP_JS@@*/
+</script>
+</body>
+</html>

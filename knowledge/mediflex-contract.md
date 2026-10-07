@@ -34,16 +34,18 @@ All three plans have the following, as charged within the annual limit:
 - Emergency medical evacuation & repatriation: up to USD1M per event.
 - Organ / bone marrow transplant as the recipient: once per lifetime.
 
-## Cost-saving options (chosen at application)
-- **Option 1: deductible.**
-  - Options 1(a), 1(b), 1(d) are fixed deductibles, either per disability or per certificate year.
-  - Options 1(c) and 1(e) are **RM20,000 or RM50,000 deductible per year**. If the client opts in at application, it auto-converts to RM500 per disability at age 60 with no underwriting.
-  - Good fit for clients who already have an employer medical card (top-up).
-- **Option 2: co-takaful.** % of the bill, capped per disability or per year.
-- **Option 3: RM500 deductible with SMART Option, per Any One Disability** (the clause sample uses this).
-  - Off the SMART journey: + 20% co-takaful on items 4–9 and 11, capped at RM20,000 per disability.
-  - Not applied for emergencies or accidents, post-hosp cancer/dialysis, or government facilities.
-  - Note the difference from Health360-i: here it is **per disability**, while Health360-i is per year.
+## Cost-saving options: LATEST (per Mamu, 7 Oct 2026)
+- Only **2 options** are offered now:
+  1. **RM500 deductible**: no SMART Option any more, so there's no 20% X SMART co-takaful.
+  2. **RM20,000 deductible**: a top-up for clients who already have an employer or other medical card.
+- Still to confirm against the latest PI or brochure:
+  - Is the RM500 per disability or per certificate year?
+  - Is the RM20k option's "auto-convert to RM500 at age 60" still offered?
+
+The contract clauses (12/25) still describe the full older menu. It is kept here for reference only:
+- Option 1: deductible. 1(a), (b), (d) are fixed amounts. 1(c), (e) are RM20k or RM50k per year with optional auto-conversion to RM500 per disability at age 60, no underwriting.
+- Option 2: co-takaful.
+- Option 3: RM500 deductible with SMART Option per disability (+20% off-SMART, capped at RM20k).
 
 ## Waiting periods & key exclusions
 - **Waiting periods:**
@@ -83,4 +85,4 @@ All three plans have the following, as charged within the annual limit:
 | OP illness | 4 named illnesses, capped | selected conditions, 5% co-takaful |
 | Health Wallet, mental health, Protect Boost | none | yes |
 | Life cover / account value | none | via base plan |
-| High deductible (RM20k/50k) top-up | yes | no |
+| Cost-saving options | RM500 deductible or RM20k deductible (no SMART) | none / RM500 / RM500 + SMART |

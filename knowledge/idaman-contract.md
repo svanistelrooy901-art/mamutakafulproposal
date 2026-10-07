@@ -4,7 +4,7 @@ Source: contract clause pages supplied by Mamu, 7 Oct 2026 (no client data).
 Form refs: S022615B09 (base, 04/25–06/26 pages) · A-Plus Health360-i T1088T (06/26) · A-Plus DisabilityCare-i T1058T (08/21).
 
 ## Base plan: A-Life Idaman
-- Benefits in the base plan: **Death, Accidental Death, Maturity**. TPD is NOT in the base plan.
+- Base-plan clauses list **Death, Accidental Death, Maturity**. TPD comes via A-Plus DisabilityCare-i, which (per Mamu, 7 Oct 2026) is **attached by default with the same sum covered**. Death or TPD is paid once, whichever comes first.
 - Death (after 30 days from birth): sum covered (from PRF) + PAF account value + PIF account value + RM5,000.
   - The RM5,000 is for Badal Hajj if Muslim and aged 16+; otherwise it is paid as funeral expenses.
 - Death before birth / within 30 days of birth: the higher of total contributions paid or PAF value, plus PIF.
@@ -24,9 +24,9 @@ Form refs: S022615B09 (base, 04/25–06/26 pages) · A-Plus Health360-i T1088T (
 - Surplus: up to 50% to the operator (Ju'alah). The rest goes to participants if no claim, and can be donated to charity.
 - Insurable interest: spouse, child, minor under the participant's care, employee, dependant.
 
-## Rider: A-Plus DisabilityCare-i (T1058T): this is where TPD comes from
+## A-Plus DisabilityCare-i (T1058T): TPD, bundled by default with the same sum covered
 - Pays the rider sum covered on Presumed Disability or TPD (Suitable Occupation definition: 6 months continuous, unable to do any suitable work).
-- **Advance payment**: the base sum covered reduces by the rider sum after a claim. The rider then ends.
+- **Advance payment**: the base sum covered reduces by the rider sum after a claim. With the same sum, death or TPD is paid once, whichever comes first. The rider then ends.
 - Ends at the anniversary after age 70.
 - Excludes congenital conditions diagnosed before 17, plus the standard disability exclusions (incl. pre-existing).
 

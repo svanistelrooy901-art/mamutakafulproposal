@@ -497,11 +497,9 @@ main{overflow:auto;-webkit-overflow-scrolling:touch;padding:20px;min-width:0}
         <div class="card">
           <h3><span class="n">2</span>A-Life Idaman</h3>
           <div class="row">
-            <label class="f"><span>Jumlah dilindungi kematian (RM, setiap orang)</span><input data-k="i.sum" inputmode="numeric" placeholder="6000"></label>
+            <label class="f"><span>Kematian / TPD (RM, setiap orang)</span><input data-k="i.sum" inputmode="numeric" placeholder="6000"></label>
             <label class="f"><span>Tempoh perlindungan</span><div class="pick" data-pick="i.term"><button data-v="70">Umur 70</button><button data-v="80">Umur 80</button></div></label>
           </div>
-          <label class="f"><span>Rider TPD · A-Plus DisabilityCare-i</span><div class="pick" data-pick="i.tpd"><button data-v="yes">Ada</button><button data-v="no">Tiada</button></div></label>
-          <label class="f" id="tpdSumRow"><span>Jumlah TPD (RM) · kosong = sama dengan jumlah kematian</span><input data-k="i.tpdSum" inputmode="numeric" placeholder="sama"></label>
         </div>
         <div class="card">
           <h3><span class="n">3</span>A-Plus Health360-i</h3>
@@ -664,7 +662,7 @@ function runRezeki(plan, basic, saver, saverYears, adhoc, rate) {
 /* ---------------- state ---------------- */
 const blankState = () => ({
   prod: 'idaman', lang: 'bm',
-  i: { family: '', persons: [{ name: '', rel: 'self', m: '' }], sum: '', tpd: 'yes', tpdSum: '', term: '70', plan: '200', ded: 'none', area: 'both' },
+  i: { family: '', persons: [{ name: '', rel: 'self', m: '' }], sum: '', term: '70', plan: '200', ded: 'none', area: 'both' },
   r: { name: '', age: '', use: 'retire', child: '', childAge: '', plan: '5Pay20', basic: '', saver: '', saverYears: '', adhoc: '',
        have: { gk: false, df: false, m1: false, m2: false }, deathMode: 'blank',
        death: [{ y: 2, v: '' }, { y: 5, v: '' }, { y: 10, v: '' }, { y: 19, v: '' }] },
@@ -707,8 +705,6 @@ function renderIdaman() {
   const persons = s.persons.filter(p => p.name.trim() || num(p.m));
   const n = Math.max(persons.length, 1);
   const sum = num(s.sum);
-  const hasTpd = s.tpd === 'yes';
-  const tpdSum = hasTpd ? (num(s.tpdSum) || sum) : 0;
   const total = persons.reduce((a, p) => a + num(p.m), 0);
   const fam = esc(s.family.trim() || (persons[0] && persons[0].name) || t('anda', 'you'));
   const p300 = s.plan === '300';
@@ -765,7 +761,7 @@ function renderIdaman() {
     <div class="plans"><span class="pill">A-Life Idaman</span><span class="pill">A-Plus Health360-i · Plan ${s.plan}${dedPill}</span><span class="pill o">AIA PUBLIC Takaful Bhd.</span></div>
   </div>
   <div class="snap">
-    <div class="card"><div class="k">${hasTpd ? t('Perlindungan kematian / TPD', 'Death / TPD cover') : t('Perlindungan kematian', 'Death cover')}</div><div class="big">${RM(sum)}</div><div class="sub">${t(`Setiap orang · <b>${RM(sum * 2)}</b> jika kematian akibat kemalangan (200%)`, `Each person · <b>${RM(sum * 2)}</b> if death is accidental (200%)`)}</div></div>
+    <div class="card"><div class="k">${t('Perlindungan kematian / TPD', 'Death / TPD cover')}</div><div class="big">${RM(sum)}</div><div class="sub">${t(`Setiap orang · kematian atau TPD, yang mana dahulu · <b>${RM(sum * 2)}</b> jika kematian akibat kemalangan`, `Each person · death or TPD, whichever comes first · <b>${RM(sum * 2)}</b> if death is accidental`)}</div></div>
     <div class="card"><div class="k">${t('Perubatan', 'Medical')} · Plan ${s.plan}</div><div class="big">${P.big}<small> ${t('juta / tahun', 'mil / year')}</small></div><div class="sub">${t(`Bilik &amp; penginapan <b>RM${P.rb}/hari</b> · Tiada had seumur hidup`, `Room &amp; board <b>RM${P.rb}/day</b> · No lifetime limit`)}</div></div>
     <div class="card people${persons.length > 2 ? ' many' : ''}"><div class="k">${t('Orang dilindungi · bulanan', 'Covered persons · monthly')}</div>${plist}
       <div class="total"><span style="font-size:7.8pt">${n > 1 ? t(`Jumlah untuk ${n}`, `Total for ${n}`) + ' · ' : ''}≈ ${RM2(daily)}${t('/hari', '/day')}</span><b>${RM(total)}${t('/bln', '/mth')}</b></div></div>
@@ -775,9 +771,7 @@ function renderIdaman() {
     <div class="life">
       <div class="lb"><div class="ic">🛡️</div><div class="v">${RM(sum)}</div><div class="t">${t('Manfaat kematian', 'Death benefit')}</div><div class="d">${t('Jumlah dilindungi kepada keluarga, tambah nilai akaun (PAF + PIF).', 'Sum covered to your family, plus account value (PAF + PIF).')}</div></div>
       <div class="lb"><div class="ic">⚡</div><div class="v">${RM(sum * 2)}</div><div class="t">${t('Kematian akibat kemalangan', 'Accidental death')}</div><div class="d">${t('Faedah kematian + tambahan 100% jumlah dilindungi (sebelum umur 70).', 'Death benefit + extra 100% of sum covered (before age 70).')}</div></div>
-      ${hasTpd
-        ? `<div class="lb"><div class="ic">♿</div><div class="v">${RM(tpdSum)}</div><div class="t">${t('TPD · A-Plus DisabilityCare-i', 'TPD · A-Plus DisabilityCare-i')}</div><div class="d">${t('Bayaran pendahuluan: jumlah dilindungi asas berkurang selepas tuntutan. Hingga umur 70.', 'Advance payout: basic sum covered reduces after a claim. Up to age 70.')}</div></div>`
-        : `<div class="lb"><div class="ic">🔒</div><div class="v">${t('5 tahun', '5 years')}</div><div class="t">${t('Perlindungan berterusan', 'No-lapse guarantee')}</div><div class="d">${t('Sijil kekal berkuat kuasa 5 tahun pertama walaupun nilai akaun tak cukup, jika caruman dibayar tepat masa.', 'Stays in force for the first 5 years even if account value runs short, if contributions are paid on time.')}</div></div>`}
+      <div class="lb"><div class="ic">♿</div><div class="v">${RM(sum)}</div><div class="t">${t('Hilang Upaya Menyeluruh &amp; Kekal', 'Total &amp; Permanent Disability')}</div><div class="d">${t('Jumlah sama, dibayar jika TPD berlaku dahulu (hingga umur 70). Kematian atau TPD, bayar sekali sahaja.', 'Same amount, paid if TPD happens first (up to age 70). Death or TPD, paid once only.')}</div></div>
       <div class="lb"><div class="ic">🕋</div><div class="v">RM5,000</div><div class="t">Badal Hajj</div><div class="d">${t('Untuk waris uruskan Badal Haji (Muslim 16+); selainnya dibayar sebagai belanja pengebumian.', 'For family to arrange Badal Hajj (Muslims 16+); otherwise paid as funeral expenses.')}</div></div>
       <div class="lb"><div class="ic">⏳</div><div class="v">${t('Umur 100', 'Age 100')}</div><div class="t">${t('Lanjutan automatik', 'Auto-extension')}</div><div class="d">${t(`Selepas matang umur ${s.term}, perlindungan diteruskan hingga umur 100 jika nilai akaun cukup.`, `After maturity at ${s.term}, cover continues to age 100 if account value is enough.`)}</div></div>
     </div>
@@ -1101,8 +1095,7 @@ function warnings() {
     const s = S.i, ps = s.persons.filter(p => p.name.trim() || num(p.m));
     if (!ps.length) w.push('Masukkan sekurang-kurangnya seorang (nama + caruman bulanan).');
     ps.forEach(p => { if (!num(p.m)) w.push(`Caruman bulanan ${p.name || '?'} kosong.`); if (!p.name.trim()) w.push('Ada orang tanpa nama.'); });
-    if (!num(s.sum)) w.push('Jumlah perlindungan Kematian kosong.');
-    if (s.tpd === 'yes' && num(s.tpdSum) > num(s.sum) && num(s.sum)) w.push('Jumlah TPD melebihi jumlah asas. TPD ialah bayaran pendahuluan; semak dengan SQS.');
+    if (!num(s.sum)) w.push('Jumlah perlindungan Kematian/TPD kosong.');
   } else {
     const { s, p, basic, saver, saverYears, age } = rezekiInputs();
     if (!s.name.trim()) w.push('Nama pelanggan kosong.');
@@ -1169,7 +1162,6 @@ function syncForm() {
   $('#formIdaman').classList.toggle('hide', S.prod !== 'idaman');
   $('#formRezeki').classList.toggle('hide', S.prod !== 'rezeki');
   $('#eduRow').classList.toggle('hide', S.r.use !== 'edu');
-  $('#tpdSumRow').classList.toggle('hide', S.i.tpd !== 'yes');
   $('#deathInputs').classList.toggle('hide', S.r.deathMode !== 'values');
   $('#dfLabel').textContent = S.r.use === 'retire' ? 'KWSP / i-Saraan' : S.r.use === 'edu' ? 'SSPN' : 'KWSP';
   $('[data-k="r.saverYears"]').placeholder = 'ikut tempoh (' + PLANS[S.r.plan].term + ')';
@@ -1247,7 +1239,7 @@ function doPrint() {
 
 function loadSample() {
   if (S.prod === 'idaman') {
-    Object.assign(S.i, { family: 'Khairil', persons: [{ name: 'Khairil', rel: 'self', m: '166' }, { name: 'Isteri', rel: 'spouse', m: '176' }], sum: '6000', tpd: 'yes', tpdSum: '', term: '70', plan: '200', ded: 'none', area: 'both' });
+    Object.assign(S.i, { family: 'Khairil', persons: [{ name: 'Khairil', rel: 'self', m: '166' }, { name: 'Isteri', rel: 'spouse', m: '176' }], sum: '6000', term: '70', plan: '200', ded: 'none', area: 'both' });
     buildPersons();
   } else {
     Object.assign(S.r, { name: 'Eddy', age: '40', use: 'retire', child: '', childAge: '', plan: '5Pay20', basic: '20000', saver: '10000', saverYears: '', adhoc: '', have: { gk: true, df: true, m1: false, m2: false }, deathMode: 'blank' });

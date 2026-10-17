@@ -25,8 +25,8 @@ def scope(css, sc):
 
 
 shell = (SRC / "shell.html").read_text()
-css = scope((SRC / "tplA.css").read_text(), ".tA") + "\n" + scope((SRC / "tplC.css").read_text(), ".tC")
-js = (SRC / "app.js").read_text()
+css = scope((SRC / "tplA.css").read_text(), ".tA") + "\n" + scope((SRC / "tplC.css").read_text(), ".tC") + "\n" + scope((SRC / "tplF.css").read_text(), ".tF")
+js = (SRC / "app.js").read_text() + "\n" + (SRC / "tools.js").read_text()
 html = shell.replace("/*@@TPL_CSS@@*/", css).replace("/*@@APP_JS@@*/", js)
 DIST.mkdir(exist_ok=True)
 (DIST / "index.html").write_text(html)

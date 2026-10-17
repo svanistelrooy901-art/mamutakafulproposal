@@ -230,7 +230,8 @@ function runRezeki(plan, basic, saver, saverYears, adhoc, rate) {
 
 /* ---------------- state ---------------- */
 const blankState = () => ({
-  prod: 'idaman', lang: 'bm',
+  prod: 'ff', lang: 'bm',
+  f: ffBlank(), c: cmpBlank(),
   i: { family: '', persons: [{ name: '', rel: 'self', m: '' }], sum: '', term: '70', plan: '200', ded: 'none', state: 'penang', area: 'all', ptype: 'all', hosp: null },
   r: { name: '', age: '', use: 'retire', child: '', childAge: '', plan: '5Pay20', basic: '', saver: '', saverYears: '', adhoc: '',
        have: { gk: false, df: false, m1: false, m2: false }, deathMode: 'blank',
@@ -687,6 +688,7 @@ function renderRezeki() {
 
 /* ---------------- validation ---------------- */
 function warnings() {
+  if (S.prod === 'ff' || S.prod === 'cmp') return toolsWarnings();
   const w = [];
   if (S.prod === 'idaman') {
     const s = S.i, ps = s.persons.filter(p => p.name.trim() || num(p.m));
@@ -714,7 +716,7 @@ let rT = 0;
 function schedule() { clearTimeout(rT); rT = setTimeout(render, 120); }
 function render() {
   const doc = $('#doc');
-  doc.innerHTML = S.prod === 'idaman' ? renderIdaman() : renderRezeki();
+  doc.innerHTML = ({ ff: renderFactFind, cmp: renderCompare, idaman: renderIdaman, rezeki: renderRezeki }[S.prod] || renderFactFind)();
   tight = 0;
   fitPreview();
   requestAnimationFrame(() => setTimeout(checkLayout, 60));
@@ -739,7 +741,8 @@ function checkLayout() {
   const box = $('#warn');
   if (w.length) { box.className = 'warnbox show'; box.innerHTML = '<b>Semak dulu:</b><br>• ' + w.map(esc).join('<br>• '); }
   else { box.className = 'warnbox show okbox'; box.innerHTML = '<b>✓ Sedia untuk PDF.</b> Semak angka caruman dengan SQS sekali lagi.'; }
-  $('#status').textContent = (S.prod === 'idaman' ? 'A-Life Idaman + Health360-i' : 'A-Enrich Rezeki') + ' · ' + (S.lang === 'bm' ? 'Bahasa Melayu' : 'English') + ' · 2 muka surat A4';
+  const docNames = { ff: ['Analisis Keperluan', 2], cmp: ['Perbandingan Pelan', 1], idaman: ['A-Life Idaman + Health360-i', 2], rezeki: ['A-Enrich Rezeki', 2] }, dn = docNames[S.prod] || docNames.ff;
+  $('#status').textContent = dn[0] + ' · ' + (S.lang === 'bm' ? 'Bahasa Melayu' : 'English') + ' · ' + dn[1] + ' muka surat A4';
 }
 let zoomBig = false;
 function fitPreview() {
@@ -760,7 +763,8 @@ function syncForm() {
   });
   $$('#panel [data-pick]').forEach(g => { const v = String(getK(g.dataset.pick)); g.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === v)); });
   $('#prodSel').value = S.prod;
-  $('#prodDesc').textContent = S.prod === 'idaman' ? 'Takaful keluarga + kad perubatan · 2 muka surat' : 'Simpanan + pelaburan 20 tahun · 2 muka surat';
+  $('#prodDesc').textContent = ({ ff: 'Fact-finding: pendapatan, 3D, hibah, bajet & jurang perlindungan · 2 muka surat', cmp: 'Bandingkan 2–3 pelan sebelah-menyebelah · 1 muka surat', idaman: 'Takaful keluarga + kad perubatan · 2 muka surat', rezeki: 'Simpanan + pelaburan 20 tahun · 2 muka surat' })[S.prod] || '';
+  toolsSync();
   $$('#langSeg button').forEach(b => b.classList.toggle('on', b.dataset.lang === S.lang));
   $('#formIdaman').classList.toggle('hide', S.prod !== 'idaman');
   $('#formRezeki').classList.toggle('hide', S.prod !== 'rezeki');
@@ -802,7 +806,7 @@ function init() {
   const panel = $('#panel');
   panel.addEventListener('input', e => {
     const el = e.target;
-    if (el.dataset.k) { setK(el.dataset.k, el.type === 'checkbox' ? el.checked : el.value); if (el.dataset.k.startsWith('a.')) saveAgent(); if (el.dataset.k === 'i.state') { S.i.area = 'all'; S.i.hosp = null; syncForm(); } }
+    if (el.dataset.k) { setK(el.dataset.k, el.type === 'checkbox' ? el.checked : el.value); if (el.dataset.k.startsWith('a.')) saveAgent(); if (el.dataset.k === 'i.state') { S.i.area = 'all'; S.i.hosp = null; syncForm(); } if (el.dataset.k.startsWith('f.')) toolsSync(); }
     else if (el.dataset.pk) { const [i, k] = el.dataset.pk.split('.'); S.i.persons[+i][k] = el.value; }
     else if (el.dataset.dk) { const [i, k] = el.dataset.dk.split('.'); S.r.death[+i][k] = el.value; }
     else return;
@@ -810,17 +814,19 @@ function init() {
   });
   $('#prodSel').addEventListener('change', e => { S.prod = e.target.value; syncForm(); render(); });
   panel.addEventListener('change', e => {
+    if (toolsChange(e.target)) return;
     if (e.target.type === 'checkbox' && e.target.dataset.k) { setK(e.target.dataset.k, e.target.checked); schedule(); }
     if (e.target.dataset.hosp !== undefined) { S.i.hosp = $$('#hospList [data-hosp]').filter(x => x.checked).map(x => x.dataset.hosp); buildHospUI(); schedule(); }
   });
   panel.addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     const g = b.closest('[data-pick]');
-    if (g) { e.preventDefault(); setK(g.dataset.pick, b.dataset.v); if (['i.area', 'i.ptype'].includes(g.dataset.pick)) S.i.hosp = null; syncForm(); render(); return; }
+    if (g) { e.preventDefault(); setK(g.dataset.pick, b.dataset.v); if (['i.area', 'i.ptype'].includes(g.dataset.pick)) S.i.hosp = null; if (g.dataset.pick.startsWith('c.')) buildCmp(); syncForm(); render(); return; }
+    if (toolsClick(b)) return;
     if (b.dataset.del !== undefined) { S.i.persons.splice(+b.dataset.del, 1); buildPersons(); render(); return; }
     if (b.id === 'addPerson') { if (S.i.persons.length < 4) S.i.persons.push({ name: '', rel: 'spouse', m: '' }); buildPersons(); render(); return; }
     if (b.id === 'sampleBtn') { loadSample(); return; }
-    if (b.id === 'clearBtn') { const a = S.a, l = S.lang, p = S.prod; S = blankState(); S.a = a; S.lang = l; S.prod = p; buildPersons(); buildDeath(); syncForm(); render(); toast('Borang dikosongkan.', 2000); return; }
+    if (b.id === 'clearBtn') { const a = S.a, l = S.lang, p = S.prod; S = blankState(); S.a = a; S.lang = l; S.prod = p; buildPersons(); buildDeath(); toolsBuild(); syncForm(); render(); toast('Borang dikosongkan.', 2000); return; }
   });
   $('#langSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.lang = b.dataset.lang; syncForm(); render(); });
   $('#tabs').addEventListener('click', e => {
@@ -836,7 +842,7 @@ function init() {
   window.addEventListener('afterprint', fitPreview);
   $('#asof').innerHTML = `<b>Data dalam app ini</b><br>ADSE fact sheet: ${DATA.asOf.adse} · Look-through: ${DATA.asOf.lookthrough}<br>Panel hospital AIA: semua negeri (berkuat kuasa ${DATA.asOf.panel}) · Manfaat produk: ${DATA.asOf.products} · Kontrak Idaman: ${DATA.asOf.idamanContract}<br>Kematian/TPD Rezeki: manual (formula belum disahkan).`;
   $('#stateSel').innerHTML = DATA.states.map(([k, bm]) => { const d = DATA.hospitals[k]; return `<option value="${k}">${bm}${!d ? ' · tiada senarai' : ''}</option>`; }).join('');
-  buildPersons(); buildDeath(); syncForm(); render();
+  buildPersons(); buildDeath(); toolsBuild(); syncForm(); render();
 }
 
 function doPrint() {
@@ -844,7 +850,7 @@ function doPrint() {
   const nm = S.prod === 'idaman' ? (S.i.family || (S.i.persons[0] || {}).name || 'Client') : (S.r.name || 'Client');
   const prod = S.prod === 'idaman' ? 'Takaful_Proposal' : 'ARezeki_' + S.r.plan;
   const old = document.title;
-  document.title = `${nm.trim().replace(/\s+/g, '_')}_${prod}_${S.lang.toUpperCase()}`;
+  document.title = (S.prod === 'ff' || S.prod === 'cmp') ? toolsDocName() : `${nm.trim().replace(/\s+/g, '_')}_${prod}_${S.lang.toUpperCase()}`;
   $('#doc').style.zoom = 1;
   if (w.length) toast('⚠️ Ada perkara belum lengkap (lihat kotak "Semak dulu"). PDF tetap dibuka.', 4000);
   setTimeout(() => {
@@ -855,6 +861,7 @@ function doPrint() {
 }
 
 function loadSample() {
+  if (S.prod === 'ff' || S.prod === 'cmp') { toolsSample(); toolsBuild(); syncForm(); render(); toast('Contoh dimuatkan.', 1800); return; }
   if (S.prod === 'idaman') {
     Object.assign(S.i, { family: 'Khairil', persons: [{ name: 'Khairil', rel: 'self', m: '166' }, { name: 'Isteri', rel: 'spouse', m: '176' }], sum: '6000', term: '70', plan: '200', ded: 'none', state: 'penang', area: 'all', ptype: 'all', hosp: null });
     buildPersons();
